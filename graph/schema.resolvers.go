@@ -44,6 +44,11 @@ func (r *mutationResolver) Login(ctx context.Context, email string, password str
 	panic(fmt.Errorf("not implemented: Login - login"))
 }
 
+// ChangePassword is the resolver for the changePassword field.
+func (r *mutationResolver) ChangePassword(ctx context.Context, oldPassword string, newPassword string) (bool, error) {
+	panic(fmt.Errorf("not implemented: ChangePassword - changePassword"))
+}
+
 // UploadFile is the resolver for the uploadFile field.
 func (r *mutationResolver) UploadFile(ctx context.Context, filename string, filetype string, filesize int32, isPublic bool) (*model.UploadIntent, error) {
 	panic(fmt.Errorf("not implemented: UploadFile - uploadFile"))
@@ -64,8 +69,28 @@ func (r *mutationResolver) ChangeVisibility(ctx context.Context, fileID string, 
 	panic(fmt.Errorf("not implemented: ChangeVisibility - changeVisibility"))
 }
 
+// MoveFile is the resolver for the moveFile field.
+func (r *mutationResolver) MoveFile(ctx context.Context, fileID string, folderID *string) (*model.File, error) {
+	panic(fmt.Errorf("not implemented: MoveFile - moveFile"))
+}
+
+// CreateFolder is the resolver for the createFolder field.
+func (r *mutationResolver) CreateFolder(ctx context.Context, name string, parentID *string) (*model.Folder, error) {
+	panic(fmt.Errorf("not implemented: CreateFolder - createFolder"))
+}
+
+// DeleteFolder is the resolver for the deleteFolder field.
+func (r *mutationResolver) DeleteFolder(ctx context.Context, folderID string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteFolder - deleteFolder"))
+}
+
+// RenameFolder is the resolver for the renameFolder field.
+func (r *mutationResolver) RenameFolder(ctx context.Context, folderID string, newName string) (*model.Folder, error) {
+	panic(fmt.Errorf("not implemented: RenameFolder - renameFolder"))
+}
+
 // ShareFile is the resolver for the shareFile field.
-func (r *mutationResolver) ShareFile(ctx context.Context, fileID string, userID string, relationshipType string) (*model.Relation, error) {
+func (r *mutationResolver) ShareFile(ctx context.Context, fileID string, userID string, relationship string) (*model.FileShares, error) {
 	panic(fmt.Errorf("not implemented: ShareFile - shareFile"))
 }
 
@@ -74,29 +99,39 @@ func (r *mutationResolver) UnshareFile(ctx context.Context, fileID string, userI
 	panic(fmt.Errorf("not implemented: UnshareFile - unshareFile"))
 }
 
-// Users is the resolver for the users field.
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Users - users"))
-}
-
-// Files is the resolver for the files field.
-func (r *queryResolver) Files(ctx context.Context) ([]*model.File, error) {
-	panic(fmt.Errorf("not implemented: Files - files"))
-}
-
-// Relations is the resolver for the relations field.
-func (r *queryResolver) Relations(ctx context.Context) ([]*model.Relation, error) {
-	panic(fmt.Errorf("not implemented: Relations - relations"))
-}
-
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	panic(fmt.Errorf("not implemented: Me - me"))
 }
 
-// MyFiles is the resolver for the myFiles field.
-func (r *queryResolver) MyFiles(ctx context.Context) ([]*model.File, error) {
-	panic(fmt.Errorf("not implemented: MyFiles - myFiles"))
+// GetUser is the resolver for the getUser field.
+func (r *queryResolver) GetUser(ctx context.Context, userID string) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: GetUser - getUser"))
+}
+
+// GetFile is the resolver for the getFile field.
+func (r *queryResolver) GetFile(ctx context.Context, fileID string) (*model.File, error) {
+	panic(fmt.Errorf("not implemented: GetFile - getFile"))
+}
+
+// ListFiles is the resolver for the listFiles field.
+func (r *queryResolver) ListFiles(ctx context.Context, folder *string, isPublic *bool, ownerID *string) ([]*model.File, error) {
+	panic(fmt.Errorf("not implemented: ListFiles - listFiles"))
+}
+
+// SearchFiles is the resolver for the searchFiles field.
+func (r *queryResolver) SearchFiles(ctx context.Context, query string) ([]*model.File, error) {
+	panic(fmt.Errorf("not implemented: SearchFiles - searchFiles"))
+}
+
+// ListSharedFiles is the resolver for the listSharedFiles field.
+func (r *queryResolver) ListSharedFiles(ctx context.Context) ([]*model.FileShares, error) {
+	panic(fmt.Errorf("not implemented: ListSharedFiles - listSharedFiles"))
+}
+
+// ListFolders is the resolver for the listFolders field.
+func (r *queryResolver) ListFolders(ctx context.Context, parentID *string) ([]*model.Folder, error) {
+	panic(fmt.Errorf("not implemented: ListFolders - listFolders"))
 }
 
 // Mutation returns MutationResolver implementation.
@@ -107,3 +142,24 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
+	panic(fmt.Errorf("not implemented: Users - users"))
+}
+func (r *queryResolver) Files(ctx context.Context) ([]*model.File, error) {
+	panic(fmt.Errorf("not implemented: Files - files"))
+}
+func (r *queryResolver) Relations(ctx context.Context) ([]*model.Relation, error) {
+	panic(fmt.Errorf("not implemented: Relations - relations"))
+}
+func (r *queryResolver) MyFiles(ctx context.Context) ([]*model.File, error) {
+	panic(fmt.Errorf("not implemented: MyFiles - myFiles"))
+}
+*/

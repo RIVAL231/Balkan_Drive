@@ -8,28 +8,39 @@ type AuthPayload struct {
 }
 
 type File struct {
-	ID       string `json:"id"`
-	Filename string `json:"filename"`
-	Filehash string `json:"filehash"`
-	Filepath string `json:"filepath"`
-	Filetype string `json:"filetype"`
-	Filesize int32  `json:"filesize"`
-	Count    int32  `json:"count"`
-	IsPublic bool   `json:"isPublic"`
-	Owner    *User  `json:"owner"`
+	ID        string  `json:"id"`
+	Filename  string  `json:"filename"`
+	Filehash  string  `json:"filehash"`
+	Filepath  string  `json:"filepath"`
+	Filetype  string  `json:"filetype"`
+	Filesize  int32   `json:"filesize"`
+	IsPublic  bool    `json:"isPublic"`
+	Folder    *string `json:"folder,omitempty"`
+	CreatedAt string  `json:"createdAt"`
+	Owner     *User   `json:"owner"`
+}
+
+type FileShares struct {
+	ID         string `json:"id"`
+	File       *File  `json:"file"`
+	SharedWith *User  `json:"sharedWith"`
+	Permission string `json:"permission"`
+	SharedBy   *User  `json:"sharedBy"`
+	ExpiresAt  string `json:"expiresAt"`
+}
+
+type Folder struct {
+	ID        string  `json:"id"`
+	Owner     *User   `json:"owner"`
+	Name      string  `json:"name"`
+	Parent    *Folder `json:"parent,omitempty"`
+	CreatedAt string  `json:"createdAt"`
 }
 
 type Mutation struct {
 }
 
 type Query struct {
-}
-
-type Relation struct {
-	ID               string `json:"id"`
-	User             *User  `json:"user"`
-	File             *File  `json:"file"`
-	RelationshipType string `json:"relationshipType"`
 }
 
 type UploadIntent struct {

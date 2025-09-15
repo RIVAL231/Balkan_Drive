@@ -23,8 +23,9 @@ type File {
   filepath: String!
   filetype: String!
   filesize: Int!
-  count: Int!
   isPublic: Boolean!
+  folder: String
+  createdAt: String!
   owner: User!
 }
 
@@ -37,23 +38,43 @@ type UploadIntent {
 # ==========================
 # Relations (Sharing)
 # ==========================
-type Relation {
+type FileShares{
   id: ID!
-  user: User!
   file: File!
-  relationshipType: String!
+  sharedWith: User!
+  permission: String!
+  sharedBy: User!
+  expiresAt: String!
 }
 
 # ==========================
 # Queries
 # ==========================
 type Query {
-  users: [User!]!
-  files: [File!]!
-  relations: [Relation!]!
+  # Auth
+  me: User!
+  getUser(userId: ID!): User
 
-  me: User
-  myFiles: [File!]!
+
+  # File ops
+  getFile(fileId: ID!): File
+  listFiles(folder: String, isPublic: Boolean, ownerId: ID): [File!]!
+  searchFiles(query: String!): [File!]!
+
+  # Sharing
+  listSharedFiles: [FileShares!]!
+
+  # Folders
+  listFolders(parentId: ID): [Folder!]!
+
+}
+
+type Folder {
+  id: ID!
+  owner: User!
+  name: String!
+  parent: Folder
+  createdAt: String!
 }
 
 # ==========================
@@ -63,14 +84,22 @@ type Mutation {
   # Auth
   register(username: String!, email: String!, password: String!): AuthPayload!
   login(email: String!, password: String!): AuthPayload!
+  changePassword(oldPassword: String!, newPassword: String!): Boolean!
+
 
   # File ops
   uploadFile(filename: String!, filetype: String!, filesize: Int!, isPublic: Boolean!): UploadIntent!
   completeUpload(uploadToken: String!): File!
   deleteFile(fileId: ID!): Boolean!
   changeVisibility(fileId: ID!, isPublic: Boolean!): File!
+  moveFile(fileId: ID!, folderId: ID): File!
+  createFolder(name: String!, parentId: ID): Folder!
+  deleteFolder(folderId: ID!): Boolean!
+  renameFolder(folderId: ID!, newName: String!): Folder!
+
 
   # Sharing
-  shareFile(fileId: ID!, userId: ID!, relationshipType: String!): Relation!
+  shareFile(fileId: ID!, userId: ID!, relationship: String!): FileShares!
   unshareFile(fileId: ID!, userId: ID!): Boolean!
+ 
 }
