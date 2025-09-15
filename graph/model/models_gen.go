@@ -7,6 +7,14 @@ type AuthPayload struct {
 	User  *User  `json:"user"`
 }
 
+type Content struct {
+	Sha256     string `json:"sha256"`
+	StorageKey string `json:"storage_key"`
+	SizeBytes  int32  `json:"size_bytes"`
+	RefCount   int32  `json:"ref_count"`
+	CreatedAt  string `json:"created_at"`
+}
+
 type File struct {
 	ID        string  `json:"id"`
 	Filename  string  `json:"filename"`
@@ -15,18 +23,18 @@ type File struct {
 	Filetype  string  `json:"filetype"`
 	Filesize  int32   `json:"filesize"`
 	IsPublic  bool    `json:"isPublic"`
-	Folder    *string `json:"folder,omitempty"`
+	Folder    *Folder `json:"folder,omitempty"`
 	CreatedAt string  `json:"createdAt"`
 	Owner     *User   `json:"owner"`
 }
 
 type FileShares struct {
-	ID         string `json:"id"`
-	File       *File  `json:"file"`
-	SharedWith *User  `json:"sharedWith"`
-	Permission string `json:"permission"`
-	SharedBy   *User  `json:"sharedBy"`
-	ExpiresAt  string `json:"expiresAt"`
+	ID         string  `json:"id"`
+	File       *File   `json:"file"`
+	SharedWith *User   `json:"sharedWith"`
+	Permission string  `json:"permission"`
+	SharedBy   *User   `json:"sharedBy"`
+	ExpiresAt  *string `json:"expiresAt,omitempty"`
 }
 
 type Folder struct {
@@ -52,4 +60,5 @@ type User struct {
 	ID       string `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
+	Password string `json:"password"`
 }

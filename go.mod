@@ -6,10 +6,13 @@ toolchain go1.24.7
 
 require (
 	github.com/99designs/gqlgen v0.17.79
+	github.com/aws/aws-sdk-go v1.55.8
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/vektah/gqlparser/v2 v2.5.30
 	golang.org/x/crypto v0.42.0
 )
+
+require github.com/jmespath/go-jmespath v0.4.0 // indirect
 
 require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect

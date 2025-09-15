@@ -33,7 +33,10 @@ func main() {
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
-
+    srv.AddTransport(transport.MultipartForm{
+		MaxMemory:     50 << 20, // 50MB
+		MaxUploadSize: 100 << 20, // 100MB
+	})
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
 
 	srv.Use(extension.Introspection{})

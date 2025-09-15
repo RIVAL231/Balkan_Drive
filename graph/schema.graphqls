@@ -1,10 +1,13 @@
 # ==========================
 # User
 # ==========================
+scalar DateTime
+scalar Upload
 type User {
   id: ID!
   username: String!
   email: String!
+  password: String!
 }
 
 # Used for login/register response
@@ -12,7 +15,13 @@ type AuthPayload {
   token: String!
   user: User!
 }
-
+type Folder {
+  id: ID!
+  owner: User!
+  name: String!
+  parent: Folder
+  createdAt: DateTime!
+}
 # ==========================
 # File
 # ==========================
@@ -24,9 +33,17 @@ type File {
   filetype: String!
   filesize: Int!
   isPublic: Boolean!
-  folder: String
-  createdAt: String!
+  folder: Folder
+  createdAt: DateTime!
   owner: User!
+}
+
+type Content{
+  sha256: String!
+  storage_key: String!
+  size_bytes: Int!
+  ref_count: Int!
+  created_at: DateTime!
 }
 
 # Returned when creating upload
@@ -44,7 +61,7 @@ type FileShares{
   sharedWith: User!
   permission: String!
   sharedBy: User!
-  expiresAt: String!
+  expiresAt: DateTime
 }
 
 # ==========================
@@ -69,13 +86,7 @@ type Query {
 
 }
 
-type Folder {
-  id: ID!
-  owner: User!
-  name: String!
-  parent: Folder
-  createdAt: String!
-}
+
 
 # ==========================
 # Mutations
@@ -88,7 +99,7 @@ type Mutation {
 
 
   # File ops
-  uploadFile(filename: String!, filetype: String!, filesize: Int!, isPublic: Boolean!): UploadIntent!
+  uploadFile(filename: String!, filetype: String!, filePath: String!, filesize: Int!, isPublic: Boolean!, file: Upload!): UploadIntent!
   completeUpload(uploadToken: String!): File!
   deleteFile(fileId: ID!): Boolean!
   changeVisibility(fileId: ID!, isPublic: Boolean!): File!
