@@ -13,7 +13,7 @@ import (
 
 // Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, username string, email string, password string) (*model.AuthPayload, error) {
-	
+	panic(fmt.Errorf("not implemented: Register - register"))
 }
 
 // Login is the resolver for the login field.
