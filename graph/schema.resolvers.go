@@ -8,12 +8,35 @@ import (
 	"context"
 	"fmt"
 
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/rival231/Balkan_Drive/graph/model"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// Register is the resolver for the register field.
+// The struct declarations are moved to schema.resolvers.go
 func (r *mutationResolver) Register(ctx context.Context, username string, email string, password string) (*model.AuthPayload, error) {
-	panic(fmt.Errorf("not implemented: Register - register"))
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %v", err)
+	}
+	user := &model.User{}
+	err = r.DB.QueryRow(ctx, "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email", username, email, string(hashedPassword)).Scan(&user.ID, &user.Username, &user.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %v", err)
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userID": user.ID,
+	})
+	// In a real application, use a secure key from environment variables or config
+	tokenString, err := token.SignedString([]byte("my-secret-key"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign token: %v", err)
+	}
+	// For simplicity, token generation is omitted
+	return &model.AuthPayload{
+		Token: tokenString,
+		User:  user,
+	}, nil
 }
 
 // Login is the resolver for the login field.

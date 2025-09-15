@@ -12,5 +12,6 @@ func Connect() (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect: %v", err)
 	}
+	fmt.Println("Connected to database!")
 	return pool, nil
 }

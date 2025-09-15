@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/rival231/Balkan_Drive/graph"
+	// "github.com/rival231/Balkan_Drive/internal/db"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -22,7 +23,12 @@ func main() {
 		port = defaultPort
 	}
 
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	 resolver := &graph.Resolver{}
+    if err := resolver.ConnectDB(); err != nil {
+        log.Fatalf("Database connection failed: %v", err)
+    }
+
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

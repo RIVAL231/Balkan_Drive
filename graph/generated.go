@@ -99,6 +99,7 @@ type ComplexityRoot struct {
 		Email    func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Username func(childComplexity int) int
+		Password func(childComplexity int) int
 	}
 }
 
