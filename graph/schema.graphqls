@@ -1,0 +1,76 @@
+# ==========================
+# User
+# ==========================
+type User {
+  id: ID!
+  username: String!
+  email: String!
+}
+
+# Used for login/register response
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
+# ==========================
+# File
+# ==========================
+type File {
+  id: ID!
+  filename: String!
+  filehash: String!
+  filepath: String!
+  filetype: String!
+  filesize: Int!
+  count: Int!
+  isPublic: Boolean!
+  owner: User!
+}
+
+# Returned when creating upload
+type UploadIntent {
+  uploadUrl: String!
+  uploadToken: String!
+}
+
+# ==========================
+# Relations (Sharing)
+# ==========================
+type Relation {
+  id: ID!
+  user: User!
+  file: File!
+  relationshipType: String!
+}
+
+# ==========================
+# Queries
+# ==========================
+type Query {
+  users: [User!]!
+  files: [File!]!
+  relations: [Relation!]!
+
+  me: User
+  myFiles: [File!]!
+}
+
+# ==========================
+# Mutations
+# ==========================
+type Mutation {
+  # Auth
+  register(username: String!, email: String!, password: String!): AuthPayload!
+  login(email: String!, password: String!): AuthPayload!
+
+  # File ops
+  uploadFile(filename: String!, filetype: String!, filesize: Int!, isPublic: Boolean!): UploadIntent!
+  completeUpload(uploadToken: String!): File!
+  deleteFile(fileId: ID!): Boolean!
+  changeVisibility(fileId: ID!, isPublic: Boolean!): File!
+
+  # Sharing
+  shareFile(fileId: ID!, userId: ID!, relationshipType: String!): Relation!
+  unshareFile(fileId: ID!, userId: ID!): Boolean!
+}
