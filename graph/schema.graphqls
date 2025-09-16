@@ -8,6 +8,7 @@ type User {
   username: String!
   email: String!
   password: String!
+  role: String!
 }
 
 # Used for login/register response
@@ -65,13 +66,30 @@ type FileShares{
 }
 
 # ==========================
+# Statistics
+# ==========================
+type StorageStatistics {
+  totalUsed: Int!
+  originalSize: Int!
+  savingsBytes: Int!
+  savingsPercentage: Float!
+  fileCount: Int!
+}
+
+type AdminStatistics {
+  totalUsers: Int!
+  totalFiles: Int!
+  totalStorage: Int!
+  totalSavings: Int!
+}
+
+# ==========================
 # Queries
 # ==========================
 type Query {
   # Auth
   me: User!
   getUser(userId: ID!): User
-
 
   # File ops
   getFile(fileId: ID!): File
@@ -84,6 +102,13 @@ type Query {
   # Folders
   listFolders(parentId: ID): [Folder!]!
 
+  # Statistics
+  storageStats: StorageStatistics!
+  
+  # Admin queries
+  adminStats: AdminStatistics!
+  listAllUsers: [User!]!
+  listAllFiles: [File!]!
 }
 
 

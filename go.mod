@@ -10,6 +10,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/vektah/gqlparser/v2 v2.5.30
 	golang.org/x/crypto v0.42.0
+	golang.org/x/time v0.13.0
 )
 
 require github.com/jmespath/go-jmespath v0.4.0 // indirect

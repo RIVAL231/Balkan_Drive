@@ -1,0 +1,398 @@
+Create a minimal and aesthetic React.js file storage application that connects to a GraphQL backend. Follow these exact specifications:
+
+## DESIGN SYSTEM
+- **Color Palette**: Primary blue (#3B82F6), secondary gray (#6B7280), success green (#10B981), error red (#EF4444), background white/gray-50
+- **Typography**: Inter font family, consistent sizing (text-sm, text-base, text-lg, text-xl, text-2xl)
+- **Spacing**: Use 4px grid system (p-1, p-2, p-4, p-6, p-8, etc.)
+- **Components**: Rounded corners (rounded-lg), subtle shadows (shadow-sm, shadow-md), smooth transitions (transition-all duration-200)
+- **Layout**: Max width containers (max-w-7xl), responsive grid (grid-cols-1 md:grid-cols-2 lg:grid-cols-4)
+
+## AUTHENTICATION SYSTEM
+
+### Login Form
+```graphql
+mutation Login($email: String!, $password: String!) {
+  login(email: $email, password: $password) {
+    token
+    user {
+      id
+      username
+      email
+      role
+    }
+  }
+}
+```
+**Response Structure:**
+```json
+{
+  "data": {
+    "login": {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "user": {
+        "id": "user123",
+        "username": "johndoe",
+        "email": "john@example.com",
+        "role": "user"
+      }
+    }
+  }
+}
+```
+
+### Register Form
+```graphql
+mutation Register($username: String!, $email: String!, $password: String!) {
+  register(username: $username, email: $email, password: $password) {
+    token
+    user {
+      id
+      username
+      email
+      role
+    }
+  }
+}
+```
+
+### Current User Query
+```graphql
+query Me {
+  me {
+    id
+    username
+    email
+    role
+  }
+}
+```
+
+## MAIN DASHBOARD LAYOUT
+
+### Header Component
+- Logo/app name on left
+- Search bar in center (w-96, placeholder "Search files...")
+- User menu dropdown on right with:
+  - User avatar/initials
+  - Username and email
+  - Storage usage bar
+  - Settings option
+  - Logout button
+
+### Sidebar Navigation
+- Fixed width (w-64) with these menu items:
+  - 📁 My Files (default active)
+  - 🔗 Shared Files
+  - 📊 Statistics
+  - 👥 Admin (only if user.role === "admin")
+- Active state styling with blue background
+- Hover effects on menu items
+
+### Main Content Area
+- Breadcrumb navigation at top
+- Action toolbar (New Folder, Upload File, View toggle)
+- File grid/list container with loading states
+
+## FILE OPERATIONS
+
+### Upload File
+```graphql
+mutation UploadFile($filename: String!, $filetype: String!, $filePath: String!, $filesize: Int!, $isPublic: Boolean!, $file: Upload!) {
+  uploadFile(filename: $filename, filetype: $filetype, filePath: $filePath, filesize: $filesize, isPublic: $isPublic, file: $file) {
+    uploadUrl
+    uploadToken
+  }
+}
+```
+
+### Complete Upload
+```graphql
+mutation CompleteUpload($uploadToken: String!) {
+  completeUpload(uploadToken: $uploadToken) {
+    id
+    filename
+    filetype
+    filesize
+    isPublic
+    filepath
+    filehash
+    createdAt
+    owner {
+      id
+      username
+    }
+  }
+}
+```
+
+### List Files
+```graphql
+query ListFiles($folder: String, $isPublic: Boolean, $ownerId: ID) {
+  listFiles(folder: $folder, isPublic: $isPublic, ownerId: $ownerId) {
+    id
+    filename
+    filetype
+    filesize
+    isPublic
+    filepath
+    filehash
+    createdAt
+    owner {
+      id
+      username
+    }
+    folder {
+      id
+      name
+    }
+  }
+}
+```
+**Response Structure:**
+```json
+{
+  "data": {
+    "listFiles": [
+      {
+        "id": "file123",
+        "filename": "document.pdf",
+        "filetype": "application/pdf",
+        "filesize": 2048576,
+        "isPublic": false,
+        "filepath": "/uploads/document.pdf",
+        "filehash": "abc123...",
+        "createdAt": "2025-09-16T10:30:00Z",
+        "owner": {
+          "id": "user123",
+          "username": "johndoe"
+        },
+        "folder": null
+      }
+    ]
+  }
+}
+```
+
+## FOLDER MANAGEMENT
+
+### List Folders
+```graphql
+query ListFolders($parentId: ID) {
+  listFolders(parentId: $parentId) {
+    id
+    name
+    owner {
+      id
+      username
+    }
+    parent {
+      id
+      name
+    }
+    createdAt
+  }
+}
+```
+
+### Create Folder
+```graphql
+mutation CreateFolder($name: String!, $parentId: ID) {
+  createFolder(name: $name, parentId: $parentId) {
+    id
+    name
+    owner {
+      id
+      username
+    }
+    parent {
+      id
+      name
+    }
+    createdAt
+  }
+}
+```
+
+## FILE SHARING
+
+### Share File
+```graphql
+mutation ShareFile($fileId: ID!, $userId: ID!, $relationship: String!) {
+  shareFile(fileId: $fileId, userId: $userId, relationship: $relationship) {
+    id
+    file {
+      id
+      filename
+    }
+    sharedWith {
+      id
+      username
+    }
+    permission
+    sharedBy {
+      id
+      username
+    }
+    expiresAt
+  }
+}
+```
+
+### List Shared Files
+```graphql
+query ListSharedFiles {
+  listSharedFiles {
+    id
+    file {
+      id
+      filename
+      filetype
+      filesize
+      createdAt
+    }
+    sharedWith {
+      id
+      username
+    }
+    permission
+    sharedBy {
+      id
+      username
+    }
+    expiresAt
+  }
+}
+```
+
+## STATISTICS
+
+### Storage Statistics
+```graphql
+query StorageStats {
+  storageStats {
+    totalUsed
+    originalSize
+    savingsBytes
+    savingsPercentage
+    fileCount
+  }
+}
+```
+**Response Structure:**
+```json
+{
+  "data": {
+    "storageStats": {
+      "totalUsed": 52428800,
+      "originalSize": 67108864,
+      "savingsBytes": 14679064,
+      "savingsPercentage": 21.875,
+      "fileCount": 25
+    }
+  }
+}
+```
+
+### Admin Statistics (Admin Only)
+```graphql
+query AdminStats {
+  adminStats {
+    totalUsers
+    totalFiles
+    totalStorage
+    totalSavings
+  }
+}
+```
+
+## COMPONENT SPECIFICATIONS
+
+### FileCard Component
+- Display file icon based on filetype (📄 document, 🖼️ image, 📹 video, etc.)
+- Show filename (truncated with ellipsis if too long)
+- Display file size (formatted as KB, MB, GB)
+- Show creation date (relative time like "2 hours ago")
+- Public/private indicator (🌐 for public, 🔒 for private)
+- Context menu on right-click or three-dots button with options:
+  - Download
+  - Share
+  - Move to folder
+  - Change visibility
+  - Delete
+- Hover effects and loading states
+
+### Upload Zone Component
+- Drag and drop area with dashed border
+- File input hidden, triggered by click
+- Upload progress bar for each file
+- Support multiple files
+- File type validation and size limits
+- Success/error states with appropriate messages
+
+### Share Modal Component
+- User search/selection dropdown
+- Permission level selection (read/write)
+- Expiration date picker (optional)
+- Share link generation for public files
+- List of current shares with remove option
+
+### Statistics Dashboard
+- Cards showing key metrics with icons
+- Progress bars for storage usage
+- Charts for data visualization (use recharts or similar)
+- Color-coded indicators (green for good, yellow for warning, red for critical)
+
+## ERROR HANDLING & LOADING STATES
+
+### Error Messages
+```json
+{
+  "errors": [
+    {
+      "message": "File not found",
+      "extensions": {
+        "code": "NOT_FOUND"
+      }
+    }
+  ]
+}
+```
+
+### Loading States
+- Skeleton loaders for file cards
+- Spinner for full-page loading
+- Progress bars for uploads
+- Disabled states for buttons during operations
+
+## RESPONSIVE DESIGN
+- Mobile: Single column layout, collapsible sidebar, bottom navigation
+- Tablet: Two-column file grid, sidebar overlay
+- Desktop: Full sidebar, multi-column grid, hover states
+
+## IMPLEMENTATION CHECKLIST
+□ Apollo Client setup with authentication headers
+□ JWT token storage in localStorage with auto-refresh
+□ Protected routes with authentication checks
+□ File upload with chunking for large files
+□ Real-time storage quota updates
+□ Toast notifications for all operations
+□ Keyboard navigation support
+□ Dark mode toggle (optional enhancement)
+□ Infinite scroll for large file lists
+□ File preview modal for images/documents
+
+## REQUIRED DEPENDENCIES
+```json
+{
+  "@apollo/client": "^3.8.0",
+  "graphql": "^16.8.0",
+  "react": "^18.2.0",
+  "react-router-dom": "^6.15.0",
+  "tailwindcss": "^3.3.0",
+  "lucide-react": "^0.263.0",
+  "react-hot-toast": "^2.4.0",
+  "date-fns": "^2.30.0"
+}
+```
+
+Create a polished, production-ready application with smooth animations, proper error handling, and excellent user experience. Focus on performance and accessibility.

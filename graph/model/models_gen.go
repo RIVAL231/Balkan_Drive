@@ -2,6 +2,13 @@
 
 package model
 
+type AdminStatistics struct {
+	TotalUsers   int32 `json:"totalUsers"`
+	TotalFiles   int32 `json:"totalFiles"`
+	TotalStorage int32 `json:"totalStorage"`
+	TotalSavings int32 `json:"totalSavings"`
+}
+
 type AuthPayload struct {
 	Token string `json:"token"`
 	User  *User  `json:"user"`
@@ -51,6 +58,14 @@ type Mutation struct {
 type Query struct {
 }
 
+type StorageStatistics struct {
+	TotalUsed         int32   `json:"totalUsed"`
+	OriginalSize      int32   `json:"originalSize"`
+	SavingsBytes      int32   `json:"savingsBytes"`
+	SavingsPercentage float64 `json:"savingsPercentage"`
+	FileCount         int32   `json:"fileCount"`
+}
+
 type UploadIntent struct {
 	UploadURL   string `json:"uploadUrl"`
 	UploadToken string `json:"uploadToken"`
@@ -61,4 +76,5 @@ type User struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 }
