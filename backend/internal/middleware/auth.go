@@ -1,0 +1,172 @@
+package middleware
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type contextKey string
+
+const UserContextKey contextKey = "user"
+
+type User struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}
+
+type Claims struct {
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+	jwt.RegisteredClaims
+}
+
+func AuthMiddleware(db *pgxpool.Pool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip auth for introspection and playground
+			if r.URL.Path == "/" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Allow CORS preflight requests
+			if r.Method == "OPTIONS" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// For GraphQL endpoint, allow without auth initially
+			// The resolvers will handle authentication for protected operations
+			if r.URL.Path == "/query" {
+				// Check if Authorization header exists
+				authHeader := r.Header.Get("Authorization")
+				if authHeader != "" {
+					// If header exists, validate it
+					parts := strings.Split(authHeader, " ")
+					if len(parts) == 2 && parts[0] == "Bearer" {
+						tokenString := parts[1]
+						jwtSecret := os.Getenv("JWT_SECRET")
+						if jwtSecret == "" {
+							jwtSecret = "your-development-secret-change-in-production" // Default for development
+						}
+
+						// Parse and validate token
+						token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+							return []byte(jwtSecret), nil
+						})
+
+						if err == nil && token.Valid {
+							claims, ok := token.Claims.(*Claims)
+							if ok {
+								// Verify user still exists in database
+								var userExists bool
+								err = db.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)", claims.UserID).Scan(&userExists)
+								if err == nil && userExists {
+									// Add user to context
+									user := &User{
+										ID:       claims.UserID,
+										Username: claims.Username,
+										Email:    claims.Email,
+										Role:     claims.Role,
+									}
+									ctx := context.WithValue(r.Context(), UserContextKey, user)
+									r = r.WithContext(ctx)
+								}
+							}
+						}
+					}
+				}
+				// Always continue to GraphQL handler (with or without user context)
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// For non-GraphQL endpoints, require authentication
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "Authorization header required", http.StatusUnauthorized)
+				return
+			}
+
+			// Extract token from "Bearer <token>"
+			parts := strings.Split(authHeader, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+				return
+			}
+
+			tokenString := parts[1]
+			jwtSecret := os.Getenv("JWT_SECRET")
+			if jwtSecret == "" {
+				jwtSecret = "your-development-secret-change-in-production" // Default for development
+			}
+
+			// Parse and validate token
+			token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+				return []byte(jwtSecret), nil
+			})
+
+			if err != nil || !token.Valid {
+				http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+				return
+			}
+
+			claims, ok := token.Claims.(*Claims)
+			if !ok {
+				http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+				return
+			}
+
+			// Verify user still exists in database
+			var userExists bool
+			err = db.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)", claims.UserID).Scan(&userExists)
+			if err != nil || !userExists {
+				http.Error(w, "User not found", http.StatusUnauthorized)
+				return
+			}
+
+			// Add user to context
+			user := &User{
+				ID:       claims.UserID,
+				Username: claims.Username,
+				Email:    claims.Email,
+				Role:     claims.Role,
+			}
+
+			ctx := context.WithValue(r.Context(), UserContextKey, user)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// GetUserFromContext extracts the authenticated user from context
+func GetUserFromContext(ctx context.Context) (*User, error) {
+	user, ok := ctx.Value(UserContextKey).(*User)
+	if !ok {
+		return nil, fmt.Errorf("user not found in context")
+	}
+	return user, nil
+}
+
+// RequireAdmin checks if the user has admin role
+func RequireAdmin(ctx context.Context) (*User, error) {
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if user.Role != "admin" {
+		return nil, fmt.Errorf("admin privileges required")
+	}
+	return user, nil
+}
+
