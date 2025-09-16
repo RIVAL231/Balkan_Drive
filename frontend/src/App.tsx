@@ -1,7 +1,7 @@
 "use client"
 
 import { Routes, Route, Navigate } from "react-router-dom"
-import { useAuth } from "./hooks/useAuth"
+import { useAuth } from "./hooks/auth"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import DashboardLayout from "./components/layout/DashboardLayout"
@@ -10,6 +10,7 @@ import SharedFiles from "./pages/SharedFiles"
 import Statistics from "./pages/Statistics"
 import AdminPanel from "./pages/AdminPanel"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
+// import "./App.css"
 
 function App() {
   const { user, loading } = useAuth()

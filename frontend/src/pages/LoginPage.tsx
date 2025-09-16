@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/hooks/auth"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import toast from "react-hot-toast"
@@ -43,10 +43,13 @@ export default function LoginPage() {
 
     setLoading(true)
     try {
+      // Clear any existing auth tokens before login
+      localStorage.removeItem("auth_token")
+      
       await login(email, password)
       toast.success("Welcome back!")
-    } catch (error: any) {
-      toast.error(error.message || "Login failed")
+    } catch (error: unknown) {
+      toast.error((error as Error).message || "Login failed")
     } finally {
       setLoading(false)
     }

@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/hooks/auth"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import toast from "react-hot-toast"
@@ -25,7 +25,7 @@ export default function RegisterPage() {
   const { register } = useAuth()
 
   const validateForm = () => {
-    const newErrors: any = {}
+    const newErrors: Record<string, string> = {}
 
     if (!username) {
       newErrors.username = "Username is required"
@@ -64,8 +64,8 @@ export default function RegisterPage() {
     try {
       await register(username, email, password)
       toast.success("Account created successfully!")
-    } catch (error: any) {
-      toast.error(error.message || "Registration failed")
+    } catch (error: unknown) {
+      toast.error((error as Error).message || "Registration failed")
     } finally {
       setLoading(false)
     }
