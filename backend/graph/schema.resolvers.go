@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -1021,15 +1022,144 @@ func (r *queryResolver) GetFile(ctx context.Context, fileID string) (*model.File
 }
 
 // SearchFiles is the resolver for the searchFiles field.
-func (r *queryResolver) SearchFiles(ctx context.Context, query string) ([]*model.File, error) {
-	searchQuery := `
-		SELECT id, filename, filetype, filesize, filehash, is_public, created_at, owner_id 
-		FROM files 
-		WHERE filename ILIKE $1 
-		ORDER BY created_at DESC
-	`
+func (r *queryResolver) SearchFiles(ctx context.Context, query *string, mimeTypes []string, sizeMin *int32, sizeMax *int32, dateFrom *string, dateTo *string, uploaderName *string, folderID *string, sortBy *string, sortDirection *string, limit *int32, offset *int32) (*model.SearchResult, error) {
+	user, err := middleware.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user not authenticated: %v", err)
+	}
 
-	rows, err := r.DB.Query(ctx, searchQuery, "%"+query+"%")
+	// Set defaults
+	if limit == nil || *limit <= 0 || *limit > 100 {
+		defaultLimit := int32(50)
+		limit = &defaultLimit
+	}
+	if offset == nil || *offset < 0 {
+		defaultOffset := int32(0)
+		offset = &defaultOffset
+	}
+	if sortBy == nil {
+		defaultSort := "created_at"
+		sortBy = &defaultSort
+	}
+	if sortDirection == nil {
+		defaultDirection := "DESC"
+		sortDirection = &defaultDirection
+	}
+
+	// Build search query with conditions
+	var conditions []string
+	var args []interface{}
+	argIndex := 1
+
+	// Base security condition - user can only see their files, shared files, or public files
+	conditions = append(conditions, fmt.Sprintf("(f.owner_id = $%d OR f.is_public = true OR EXISTS(SELECT 1 FROM file_shares fs WHERE fs.file_id = f.id AND fs.shared_with = $%d))", argIndex, argIndex))
+	args = append(args, user.ID)
+	argIndex++
+
+	// Filename search
+	if query != nil && *query != "" {
+		conditions = append(conditions, fmt.Sprintf("f.filename ILIKE $%d", argIndex))
+		args = append(args, "%"+*query+"%")
+		argIndex++
+	}
+
+	// MIME type filter
+	if mimeTypes != nil && len(mimeTypes) > 0 {
+		var mimeConditions []string
+		for _, mimeType := range mimeTypes {
+			if mimeType != "" {
+				mimeConditions = append(mimeConditions, fmt.Sprintf("f.filetype ILIKE $%d", argIndex))
+				args = append(args, mimeType)
+				argIndex++
+			}
+		}
+		if len(mimeConditions) > 0 {
+			conditions = append(conditions, "("+strings.Join(mimeConditions, " OR ")+")")
+		}
+	}
+
+	// Size range filter
+	if sizeMin != nil && *sizeMin > 0 {
+		conditions = append(conditions, fmt.Sprintf("f.filesize >= $%d", argIndex))
+		args = append(args, *sizeMin)
+		argIndex++
+	}
+	if sizeMax != nil && *sizeMax > 0 {
+		conditions = append(conditions, fmt.Sprintf("f.filesize <= $%d", argIndex))
+		args = append(args, *sizeMax)
+		argIndex++
+	}
+
+	// Date range filter
+	if dateFrom != nil && *dateFrom != "" {
+		conditions = append(conditions, fmt.Sprintf("f.created_at >= $%d", argIndex))
+		args = append(args, *dateFrom)
+		argIndex++
+	}
+	if dateTo != nil && *dateTo != "" {
+		conditions = append(conditions, fmt.Sprintf("f.created_at <= $%d", argIndex))
+		args = append(args, *dateTo+" 23:59:59")
+		argIndex++
+	}
+
+	// Uploader name filter
+	if uploaderName != nil && *uploaderName != "" {
+		conditions = append(conditions, fmt.Sprintf("u.username ILIKE $%d", argIndex))
+		args = append(args, "%"+*uploaderName+"%")
+		argIndex++
+	}
+
+	// Folder filter
+	if folderID != nil && *folderID != "" {
+		if *folderID == "root" {
+			conditions = append(conditions, "f.folder_id IS NULL")
+		} else {
+			conditions = append(conditions, fmt.Sprintf("f.folder_id = $%d", argIndex))
+			args = append(args, *folderID)
+			argIndex++
+		}
+	}
+
+	// Validate sort field
+	validSortFields := map[string]string{
+		"filename":   "f.filename",
+		"filesize":   "f.filesize",
+		"created_at": "f.created_at",
+		"filetype":   "f.filetype",
+	}
+	sortField, exists := validSortFields[*sortBy]
+	if !exists {
+		sortField = "f.created_at"
+	}
+
+	// Validate sort direction
+	direction := "DESC"
+	if *sortDirection == "ASC" || *sortDirection == "asc" {
+		direction = "ASC"
+	}
+
+	// Build main query
+	whereClause := "WHERE " + strings.Join(conditions, " AND ")
+
+	mainQuery := fmt.Sprintf(`
+		SELECT f.id, f.filename, f.filetype, f.filesize, f.filehash,
+			   f.is_public, f.is_public_shared, f.public_share_enabled_at, f.created_at, f.owner_id,
+			   u.username, u.email, u.role,
+			   fo.id as folder_id, fo.name as folder_name,
+			   pseu.username as public_share_enabled_by_username
+		FROM files f
+		JOIN users u ON f.owner_id = u.id
+		LEFT JOIN folders fo ON f.folder_id = fo.id
+		LEFT JOIN users pseu ON f.public_share_enabled_by = pseu.id
+		%s
+		ORDER BY %s %s
+		LIMIT $%d OFFSET $%d
+	`, whereClause, sortField, direction, argIndex, argIndex+1)
+
+	args = append(args, *limit, *offset)
+
+	// Execute main query
+	rows, err := r.DB.Query(ctx, mainQuery, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search files: %v", err)
 	}
@@ -1038,34 +1168,88 @@ func (r *queryResolver) SearchFiles(ctx context.Context, query string) ([]*model
 	var files []*model.File
 	for rows.Next() {
 		var file model.File
+		var owner model.User
 		var createdAt time.Time
-		var fileOwnerID string
-		err := rows.Scan(&file.ID, &file.Filename, &file.Filetype, &file.Filesize, &file.Filehash, &file.IsPublic, &createdAt, &fileOwnerID)
+		var publicShareEnabledAt *time.Time
+		var folderID *string
+		var folderName *string
+		var publicShareEnabledByUsername *string
+
+		err := rows.Scan(
+			&file.ID, &file.Filename, &file.Filetype, &file.Filesize, &file.Filehash,
+			&file.IsPublic, &file.IsPublicShared, &publicShareEnabledAt, &createdAt, &owner.ID,
+			&owner.Username, &owner.Email, &owner.Role,
+			&folderID, &folderName, &publicShareEnabledByUsername,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan file: %v", err)
 		}
 
-		// Convert timestamp to string
+		// Set timestamps
 		file.CreatedAt = createdAt.Format(time.RFC3339)
+		if publicShareEnabledAt != nil {
+			timeStr := publicShareEnabledAt.Format(time.RFC3339)
+			file.PublicShareEnabledAt = &timeStr
+		}
 
-		// Generate filepath (S3 key or URL)
+		// Generate filepath from filehash
 		file.Filepath = fmt.Sprintf("uploads/%s", file.Filehash)
 
-		// Get owner information
-		var owner model.User
-		err = r.DB.QueryRow(ctx,
-			"SELECT id, username, email, COALESCE(role, 'user') FROM users WHERE id = $1",
-			fileOwnerID,
-		).Scan(&owner.ID, &owner.Username, &owner.Email, &owner.Role)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get owner: %v", err)
-		}
+		// Set owner
 		file.Owner = &owner
+
+		// Set folder if exists
+		if folderID != nil && folderName != nil {
+			file.Folder = &model.Folder{
+				ID:   *folderID,
+				Name: *folderName,
+			}
+		}
+
+		// Set public share enabled by user if exists
+		if publicShareEnabledByUsername != nil {
+			file.PublicShareEnabledBy = &model.User{
+				Username: *publicShareEnabledByUsername,
+			}
+		}
 
 		files = append(files, &file)
 	}
 
-	return files, nil
+	// Get total count
+	countQuery := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM files f
+		JOIN users u ON f.owner_id = u.id
+		LEFT JOIN folders fo ON f.folder_id = fo.id
+		%s
+	`, whereClause)
+
+	var totalCount int32
+	err = r.DB.QueryRow(ctx, countQuery, args[:len(args)-2]...).Scan(&totalCount)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get total count: %v", err)
+	}
+
+	// Generate facets for better search experience
+	facets, err := r.generateSearchFacets(ctx, conditions, args[:len(args)-2])
+	if err != nil {
+		// Don't fail the whole query if facets fail
+		facets = &model.SearchFacets{
+			MimeTypes:   []*model.MimeTypeFacet{},
+			Uploaders:   []*model.UploaderFacet{},
+			SizeBuckets: []*model.SizeBucketFacet{},
+		}
+	}
+
+	hasMore := int32(*offset)+int32(len(files)) < totalCount
+
+	return &model.SearchResult{
+		Files:      files,
+		TotalCount: totalCount,
+		HasMore:    hasMore,
+		Facets:     facets,
+	}, nil
 }
 
 // ListSharedFiles is the resolver for the listSharedFiles field.
@@ -1671,3 +1855,132 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+
+func (r *queryResolver) generateSearchFacets(ctx context.Context, conditions []string, args []interface{}) (*model.SearchFacets, error) {
+	whereClause := "WHERE " + strings.Join(conditions, " AND ")
+
+	// MIME type facets
+	mimeQuery := fmt.Sprintf(`
+		SELECT
+			CASE
+				WHEN f.filetype LIKE 'image/%%' THEN 'Images'
+				WHEN f.filetype LIKE 'video/%%' THEN 'Videos'
+				WHEN f.filetype LIKE 'audio/%%' THEN 'Audio'
+				WHEN f.filetype LIKE 'text/%%' THEN 'Text'
+				WHEN f.filetype IN ('application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') THEN 'Documents'
+				WHEN f.filetype LIKE 'application/%%' THEN 'Applications'
+				ELSE 'Other'
+			END as category,
+			f.filetype,
+			COUNT(*) as count
+		FROM files f
+		JOIN users u ON f.owner_id = u.id
+		%s
+		GROUP BY category, f.filetype
+		ORDER BY count DESC
+		LIMIT 20
+	`, whereClause)
+
+	mimeRows, err := r.DB.Query(ctx, mimeQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer mimeRows.Close()
+
+	var mimeTypeFacets []*model.MimeTypeFacet
+	for mimeRows.Next() {
+		var facet model.MimeTypeFacet
+		err := mimeRows.Scan(&facet.Category, &facet.Type, &facet.Count)
+		if err != nil {
+			continue
+		}
+		mimeTypeFacets = append(mimeTypeFacets, &facet)
+	}
+
+	// Uploader facets
+	uploaderQuery := fmt.Sprintf(`
+		SELECT u.username, u.id, COUNT(*) as count
+		FROM files f
+		JOIN users u ON f.owner_id = u.id
+		%s
+		GROUP BY u.username, u.id
+		ORDER BY count DESC
+		LIMIT 10
+	`, whereClause)
+
+	uploaderRows, err := r.DB.Query(ctx, uploaderQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer uploaderRows.Close()
+
+	var uploaderFacets []*model.UploaderFacet
+	for uploaderRows.Next() {
+		var facet model.UploaderFacet
+		err := uploaderRows.Scan(&facet.Username, &facet.UserID, &facet.Count)
+		if err != nil {
+			continue
+		}
+		uploaderFacets = append(uploaderFacets, &facet)
+	}
+
+	// Size bucket facets
+	sizeQuery := fmt.Sprintf(`
+		SELECT
+			CASE
+				WHEN f.filesize < 1048576 THEN 'Small (< 1MB)'
+				WHEN f.filesize < 10485760 THEN 'Medium (1-10MB)'
+				WHEN f.filesize < 104857600 THEN 'Large (10-100MB)'
+				ELSE 'Huge (> 100MB)'
+			END as range_label,
+			CASE
+				WHEN f.filesize < 1048576 THEN 0
+				WHEN f.filesize < 10485760 THEN 1048576
+				WHEN f.filesize < 104857600 THEN 10485760
+				ELSE 104857600
+			END as min_size,
+			CASE
+				WHEN f.filesize < 1048576 THEN 1048576
+				WHEN f.filesize < 10485760 THEN 10485760
+				WHEN f.filesize < 104857600 THEN 104857600
+				ELSE NULL
+			END as max_size,
+			COUNT(*) as count
+		FROM files f
+		JOIN users u ON f.owner_id = u.id
+		%s
+		GROUP BY range_label, min_size, max_size
+		ORDER BY min_size
+	`, whereClause)
+
+	sizeRows, err := r.DB.Query(ctx, sizeQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer sizeRows.Close()
+
+	var sizeBucketFacets []*model.SizeBucketFacet
+	for sizeRows.Next() {
+		var facet model.SizeBucketFacet
+		var maxSize *int32
+		err := sizeRows.Scan(&facet.Range, &facet.Min, &maxSize, &facet.Count)
+		if err != nil {
+			continue
+		}
+		facet.Max = maxSize
+		sizeBucketFacets = append(sizeBucketFacets, &facet)
+	}
+
+	return &model.SearchFacets{
+		MimeTypes:   mimeTypeFacets,
+		Uploaders:   uploaderFacets,
+		SizeBuckets: sizeBucketFacets,
+	}, nil
+}

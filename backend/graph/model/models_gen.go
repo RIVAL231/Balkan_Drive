@@ -71,6 +71,12 @@ type Folder struct {
 	CreatedAt string  `json:"createdAt"`
 }
 
+type MimeTypeFacet struct {
+	Type     string `json:"type"`
+	Count    int32  `json:"count"`
+	Category string `json:"category"`
+}
+
 type Mutation struct {
 }
 
@@ -96,9 +102,35 @@ type PublicFileStats struct {
 type Query struct {
 }
 
+type SearchFacets struct {
+	MimeTypes   []*MimeTypeFacet   `json:"mimeTypes"`
+	Uploaders   []*UploaderFacet   `json:"uploaders"`
+	SizeBuckets []*SizeBucketFacet `json:"sizeBuckets"`
+}
+
+type SearchResult struct {
+	Files      []*File       `json:"files"`
+	TotalCount int32         `json:"totalCount"`
+	HasMore    bool          `json:"hasMore"`
+	Facets     *SearchFacets `json:"facets"`
+}
+
+type SizeBucketFacet struct {
+	Range string `json:"range"`
+	Min   int32  `json:"min"`
+	Max   *int32 `json:"max,omitempty"`
+	Count int32  `json:"count"`
+}
+
 type UploadIntent struct {
 	UploadURL   string `json:"uploadUrl"`
 	UploadToken string `json:"uploadToken"`
+}
+
+type UploaderFacet struct {
+	Username string `json:"username"`
+	UserID   string `json:"userId"`
+	Count    int32  `json:"count"`
 }
 
 type User struct {

@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Upload, Grid, List } from "lucide-react"
+import { Plus, Upload, Grid, List, Search } from "lucide-react"
 import { useFiles, useFolders, useFileOperations, useDownloadUrl } from "@/hooks/useFiles"
 import { useShareFilePublicly, useUnshareFilePublicly } from "@/hooks/usePublicFiles"
+import { useSearch } from "@/hooks/useSearch"
 import Button from "@/components/ui/Button"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import FileCard from "@/components/files/FileCard"
+import SearchBar from "@/components/files/SearchBar"
 import UploadZone from "@/components/files/UploadZone"
 import CreateFolderModal from "@/components/files/CreateFolderModal"
 import MoveToFolderModal from "@/components/files/MoveToFolderModal"
@@ -47,16 +49,32 @@ export default function MyFiles() {
   const [showStatsModal, setShowStatsModal] = useState(false)
   const [statsFileId, setStatsFileId] = useState<string>("")
   const [statsFileName, setStatsFileName] = useState<string>("")
-//   const [showCreateFolder, setShowCreateFolder] = useState(false)
-//   const [currentFolder, setCurrentFolder] = useState<string | undefined>()
-//   const [folderPath, setFolderPath] = useState<{id: string, name: string}[]>([])
+  const [isSearchMode, setIsSearchMode] = useState(false)
+
+  // Initialize search with current folder context
+  const { 
+    searchState, 
+    search, 
+    clearSearch, 
+    loadMore, 
+    updateFilters,
+    canLoadMore,
+    totalResults
+  } = useSearch({ folderId: currentFolder })
 
   const { files, loading: filesLoading, refetch: refetchFiles } = useFiles(currentFolder)
-  const { folders, loading: foldersLoading, refetch: refetchFolders } = useFolders(currentFolder)
+  const { folders, refetch: refetchFolders } = useFolders(currentFolder)
   const { deleteFile, shareFileByUsername, moveFile } = useFileOperations()
   const { downloadFile } = useDownloadUrl()
   const { sharePublicly } = useShareFilePublicly()
   const { unsharePublicly } = useUnshareFilePublicly()
+
+  // Determine which files to display - search results or regular files
+  const displayFiles = isSearchMode && searchState.hasSearched 
+    ? searchState.results?.files || []
+    : files
+  
+  const isLoading = isSearchMode ? searchState.isLoading : filesLoading
 
   const handleUploadComplete = () => {
     refetchFiles()
@@ -65,6 +83,30 @@ export default function MyFiles() {
 
   const handleFolderCreated = () => {
     refetchFolders()
+  }
+
+  const handleSearch = () => {
+    setIsSearchMode(true)
+    search()
+  }
+
+  const handleClearSearch = () => {
+    setIsSearchMode(false)
+    clearSearch()
+  }
+
+  const handleFolderNavigation = (folderId?: string, pathIndex?: number) => {
+    // Clear search when navigating folders
+    if (isSearchMode) {
+      handleClearSearch()
+    }
+    handleNavigateToFolder(folderId, pathIndex)
+  }
+
+  const handleShowStatsModal = (fileId: string, filename: string) => {
+    setStatsFileId(fileId)
+    setStatsFileName(filename)
+    setShowStatsModal(true)
   }
 
   const handleShareFile = async (fileId: string, username: string) => {
@@ -118,12 +160,6 @@ export default function MyFiles() {
       console.error('Failed to download file:', error)
       alert('Failed to download file')
     }
-  }
-
-  const handleShowStats = (fileId: string, fileName: string) => {
-    setStatsFileId(fileId)
-    setStatsFileName(fileName)
-    setShowStatsModal(true)
   }
 
   const handleMoveFile = async (fileId: string, folderId: string | null) => {
@@ -205,7 +241,7 @@ export default function MyFiles() {
     }
   }
 
-  if (filesLoading || foldersLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <LoadingSpinner size="lg" />
@@ -217,13 +253,44 @@ export default function MyFiles() {
     <div>
       <Breadcrumb 
         items={[
-          { label: "My Files", onClick: () => handleNavigateToFolder(undefined) },
+          { label: "My Files", onClick: () => handleFolderNavigation(undefined) },
           ...folderPath.map((folder, index) => ({
             label: folder.name,
-            onClick: () => handleNavigateToFolder(folder.id, index)
+            onClick: () => handleFolderNavigation(folder.id, index)
           }))
         ]} 
       />
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <SearchBar
+          filters={searchState.filters}
+          onFiltersChange={updateFilters}
+          onSearch={handleSearch}
+          isLoading={searchState.isLoading}
+          placeholder="Search files by name..."
+        />
+        
+        {/* Search Results Info */}
+        {isSearchMode && searchState.hasSearched && (
+          <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+            <span>
+              {searchState.error 
+                ? `Error: ${searchState.error}`
+                : `Found ${totalResults} file${totalResults !== 1 ? 's' : ''}`
+              }
+            </span>
+            {isSearchMode && (
+              <button
+                onClick={handleClearSearch}
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Action Toolbar */}
       <div className="flex items-center justify-between mb-6">
@@ -278,66 +345,118 @@ export default function MyFiles() {
         onDragOver={handleDragOver}
         onDrop={handleRootDrop}
       >
-        {files.length === 0 && folders.length === 0 ? (
+        {/* Show empty state based on context */}
+        {displayFiles.length === 0 && (isSearchMode ? true : folders.length === 0) ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Upload className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No files yet</h3>
-            <p className="text-gray-500 mb-4">Upload your first file to get started</p>
-            <Button className="flex items-center space-x-2" onClick={() => setShowUpload(true)}>
-              <Upload className="w-4 h-4" />
-              <span>Upload File</span>
-            </Button>
+            {isSearchMode ? (
+              // Search empty state
+              <>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {searchState.hasSearched ? 'No files found' : 'Start searching'}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {searchState.hasSearched 
+                    ? 'Try adjusting your search filters or search terms'
+                    : 'Use the search bar above to find your files'
+                  }
+                </p>
+                {searchState.hasSearched && (
+                  <Button variant="outline" onClick={handleClearSearch}>
+                    Clear search
+                  </Button>
+                )}
+              </>
+            ) : (
+              // Regular empty state
+              <>
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Upload className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No files yet</h3>
+                <p className="text-gray-500 mb-4">Upload your first file to get started</p>
+                <Button className="flex items-center space-x-2" onClick={() => setShowUpload(true)}>
+                  <Upload className="w-4 h-4" />
+                  <span>Upload File</span>
+                </Button>
+              </>
+            )}
           </div>
         ) : (
-          <div
-            className={
-              viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "space-y-2"
-            }
-          >
-            {folders.map((folder: FolderType) => (
-              <div
-                key={folder.id}
-                className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors border-2 border-dashed border-transparent hover:border-blue-300"
-                onDoubleClick={() => handleFolderDoubleClick(folder.id)}
-                onDragOver={handleFolderDragOver}
-                onDragLeave={handleFolderDragLeave}
-                onDrop={(e) => {
-                  handleFolderDrop(e, folder.id)
-                  // Remove visual feedback after drop
-                  const target = e.currentTarget as HTMLElement
-                  target.classList.remove('border-blue-500', 'bg-blue-50')
-                }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="text-2xl">📁</div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{folder.name}</h3>
-                    <p className="text-xs text-gray-500">Folder</p>
+          <>
+            <div
+              className={
+                viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "space-y-2"
+              }
+            >
+              {/* Show folders only when not in search mode */}
+              {!isSearchMode && folders.map((folder: FolderType) => (
+                <div
+                  key={folder.id}
+                  className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors border-2 border-dashed border-transparent hover:border-blue-300"
+                  onDoubleClick={() => handleFolderDoubleClick(folder.id)}
+                  onDragOver={handleFolderDragOver}
+                  onDragLeave={handleFolderDragLeave}
+                  onDrop={(e) => {
+                    handleFolderDrop(e, folder.id)
+                    // Remove visual feedback after drop
+                    const target = e.currentTarget as HTMLElement
+                    target.classList.remove('border-blue-500', 'bg-blue-50')
+                  }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl">📁</div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{folder.name}</h3>
+                      <p className="text-xs text-gray-500">Folder</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
-            {files.map((file: FileType) => (
-              <FileCard
-                key={file.id}
-                file={file}
-                onShare={(fileId) => {
-                  const username = prompt('Enter username to share with:')
-                  if (username) {
-                    handleShareFile(fileId, username)
-                  }
-                }}
-                onDelete={handleDeleteFile}
-                onToggleVisibility={handleToggleVisibility}
-                onDownload={() => handleDownloadFile(file.id, file.filename)}
-                onMoveToFolder={handleShowMoveModal}
-                onShowStats={handleShowStats}
-              />
-            ))}
-          </div>
+              {/* Render files (either search results or regular files) */}
+              {displayFiles.map((file: FileType) => (
+                <FileCard
+                  key={file.id}
+                  file={file}
+                  onShare={(fileId) => {
+                    const username = prompt('Enter username to share with:')
+                    if (username) {
+                      handleShareFile(fileId, username)
+                    }
+                  }}
+                  onDelete={handleDeleteFile}
+                  onDownload={() => handleDownloadFile(file.id, file.filename)}
+                  onToggleVisibility={handleToggleVisibility}
+                  onMoveToFolder={handleShowMoveModal}
+                  onShowStats={(fileId) => handleShowStatsModal(fileId, file.filename)}
+                />
+              ))}
+            </div>
+
+            {/* Load More Button for Search Results */}
+            {isSearchMode && canLoadMore && (
+              <div className="mt-6 text-center">
+                <Button
+                  variant="outline"
+                  onClick={loadMore}
+                  disabled={searchState.isLoading}
+                  className="min-w-32"
+                >
+                  {searchState.isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More'
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

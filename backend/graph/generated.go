@@ -116,6 +116,12 @@ type ComplexityRoot struct {
 		Parent    func(childComplexity int) int
 	}
 
+	MimeTypeFacet struct {
+		Category func(childComplexity int) int
+		Count    func(childComplexity int) int
+		Type     func(childComplexity int) int
+	}
+
 	Mutation struct {
 		ChangePassword      func(childComplexity int, oldPassword string, newPassword string) int
 		ChangeVisibility    func(childComplexity int, fileID string, isPublic bool) int
@@ -169,12 +175,38 @@ type ComplexityRoot struct {
 		ListSharedFiles      func(childComplexity int) int
 		ListUsers            func(childComplexity int) int
 		Me                   func(childComplexity int) int
-		SearchFiles          func(childComplexity int, query string) int
+		SearchFiles          func(childComplexity int, query *string, mimeTypes []string, sizeMin *int32, sizeMax *int32, dateFrom *string, dateTo *string, uploaderName *string, folderID *string, sortBy *string, sortDirection *string, limit *int32, offset *int32) int
+	}
+
+	SearchFacets struct {
+		MimeTypes   func(childComplexity int) int
+		SizeBuckets func(childComplexity int) int
+		Uploaders   func(childComplexity int) int
+	}
+
+	SearchResult struct {
+		Facets     func(childComplexity int) int
+		Files      func(childComplexity int) int
+		HasMore    func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	SizeBucketFacet struct {
+		Count func(childComplexity int) int
+		Max   func(childComplexity int) int
+		Min   func(childComplexity int) int
+		Range func(childComplexity int) int
 	}
 
 	UploadIntent struct {
 		UploadToken func(childComplexity int) int
 		UploadURL   func(childComplexity int) int
+	}
+
+	UploaderFacet struct {
+		Count    func(childComplexity int) int
+		UserID   func(childComplexity int) int
+		Username func(childComplexity int) int
 	}
 
 	User struct {
@@ -221,7 +253,7 @@ type QueryResolver interface {
 	ListAllUsers(ctx context.Context) ([]*model.User, error)
 	ListFiles(ctx context.Context, folderID *string) ([]*model.File, error)
 	GetFile(ctx context.Context, fileID string) (*model.File, error)
-	SearchFiles(ctx context.Context, query string) ([]*model.File, error)
+	SearchFiles(ctx context.Context, query *string, mimeTypes []string, sizeMin *int32, sizeMax *int32, dateFrom *string, dateTo *string, uploaderName *string, folderID *string, sortBy *string, sortDirection *string, limit *int32, offset *int32) (*model.SearchResult, error)
 	ListSharedFiles(ctx context.Context) ([]*model.FileShares, error)
 	ListPublicFiles(ctx context.Context) ([]*model.PublicFile, error)
 	GetFileDownloadStats(ctx context.Context, fileID string) (*model.FileDownloadStats, error)
@@ -528,6 +560,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Folder.Parent(childComplexity), true
+
+	case "MimeTypeFacet.category":
+		if e.complexity.MimeTypeFacet.Category == nil {
+			break
+		}
+
+		return e.complexity.MimeTypeFacet.Category(childComplexity), true
+	case "MimeTypeFacet.count":
+		if e.complexity.MimeTypeFacet.Count == nil {
+			break
+		}
+
+		return e.complexity.MimeTypeFacet.Count(childComplexity), true
+	case "MimeTypeFacet.type":
+		if e.complexity.MimeTypeFacet.Type == nil {
+			break
+		}
+
+		return e.complexity.MimeTypeFacet.Type(childComplexity), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -910,7 +961,76 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.SearchFiles(childComplexity, args["query"].(string)), true
+		return e.complexity.Query.SearchFiles(childComplexity, args["query"].(*string), args["mimeTypes"].([]string), args["sizeMin"].(*int32), args["sizeMax"].(*int32), args["dateFrom"].(*string), args["dateTo"].(*string), args["uploaderName"].(*string), args["folderId"].(*string), args["sortBy"].(*string), args["sortDirection"].(*string), args["limit"].(*int32), args["offset"].(*int32)), true
+
+	case "SearchFacets.mimeTypes":
+		if e.complexity.SearchFacets.MimeTypes == nil {
+			break
+		}
+
+		return e.complexity.SearchFacets.MimeTypes(childComplexity), true
+	case "SearchFacets.sizeBuckets":
+		if e.complexity.SearchFacets.SizeBuckets == nil {
+			break
+		}
+
+		return e.complexity.SearchFacets.SizeBuckets(childComplexity), true
+	case "SearchFacets.uploaders":
+		if e.complexity.SearchFacets.Uploaders == nil {
+			break
+		}
+
+		return e.complexity.SearchFacets.Uploaders(childComplexity), true
+
+	case "SearchResult.facets":
+		if e.complexity.SearchResult.Facets == nil {
+			break
+		}
+
+		return e.complexity.SearchResult.Facets(childComplexity), true
+	case "SearchResult.files":
+		if e.complexity.SearchResult.Files == nil {
+			break
+		}
+
+		return e.complexity.SearchResult.Files(childComplexity), true
+	case "SearchResult.hasMore":
+		if e.complexity.SearchResult.HasMore == nil {
+			break
+		}
+
+		return e.complexity.SearchResult.HasMore(childComplexity), true
+	case "SearchResult.totalCount":
+		if e.complexity.SearchResult.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.SearchResult.TotalCount(childComplexity), true
+
+	case "SizeBucketFacet.count":
+		if e.complexity.SizeBucketFacet.Count == nil {
+			break
+		}
+
+		return e.complexity.SizeBucketFacet.Count(childComplexity), true
+	case "SizeBucketFacet.max":
+		if e.complexity.SizeBucketFacet.Max == nil {
+			break
+		}
+
+		return e.complexity.SizeBucketFacet.Max(childComplexity), true
+	case "SizeBucketFacet.min":
+		if e.complexity.SizeBucketFacet.Min == nil {
+			break
+		}
+
+		return e.complexity.SizeBucketFacet.Min(childComplexity), true
+	case "SizeBucketFacet.range":
+		if e.complexity.SizeBucketFacet.Range == nil {
+			break
+		}
+
+		return e.complexity.SizeBucketFacet.Range(childComplexity), true
 
 	case "UploadIntent.uploadToken":
 		if e.complexity.UploadIntent.UploadToken == nil {
@@ -924,6 +1044,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UploadIntent.UploadURL(childComplexity), true
+
+	case "UploaderFacet.count":
+		if e.complexity.UploaderFacet.Count == nil {
+			break
+		}
+
+		return e.complexity.UploaderFacet.Count(childComplexity), true
+	case "UploaderFacet.userId":
+		if e.complexity.UploaderFacet.UserID == nil {
+			break
+		}
+
+		return e.complexity.UploaderFacet.UserID(childComplexity), true
+	case "UploaderFacet.username":
+		if e.complexity.UploaderFacet.Username == nil {
+			break
+		}
+
+		return e.complexity.UploaderFacet.Username(childComplexity), true
 
 	case "User.email":
 		if e.complexity.User.Email == nil {
@@ -1473,11 +1612,66 @@ func (ec *executionContext) field_Query_listFolders_args(ctx context.Context, ra
 func (ec *executionContext) field_Query_searchFiles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "query", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "query", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
 	args["query"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "mimeTypes", ec.unmarshalOString2ᚕstringᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["mimeTypes"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "sizeMin", ec.unmarshalOInt2ᚖint32)
+	if err != nil {
+		return nil, err
+	}
+	args["sizeMin"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "sizeMax", ec.unmarshalOInt2ᚖint32)
+	if err != nil {
+		return nil, err
+	}
+	args["sizeMax"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "dateFrom", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["dateFrom"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "dateTo", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["dateTo"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "uploaderName", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["uploaderName"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "folderId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["folderId"] = arg7
+	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["sortBy"] = arg8
+	arg9, err := graphql.ProcessArgField(ctx, rawArgs, "sortDirection", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["sortDirection"] = arg9
+	arg10, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint32)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg10
+	arg11, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint32)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg11
 	return args, nil
 }
 
@@ -3006,6 +3200,93 @@ func (ec *executionContext) fieldContext_Folder_createdAt(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _MimeTypeFacet_type(ctx context.Context, field graphql.CollectedField, obj *model.MimeTypeFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MimeTypeFacet_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MimeTypeFacet_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MimeTypeFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MimeTypeFacet_count(ctx context.Context, field graphql.CollectedField, obj *model.MimeTypeFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MimeTypeFacet_count,
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MimeTypeFacet_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MimeTypeFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MimeTypeFacet_category(ctx context.Context, field graphql.CollectedField, obj *model.MimeTypeFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MimeTypeFacet_category,
+		func(ctx context.Context) (any, error) {
+			return obj.Category, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MimeTypeFacet_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MimeTypeFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_register(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4527,10 +4808,10 @@ func (ec *executionContext) _Query_searchFiles(ctx context.Context, field graphq
 		ec.fieldContext_Query_searchFiles,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().SearchFiles(ctx, fc.Args["query"].(string))
+			return ec.resolvers.Query().SearchFiles(ctx, fc.Args["query"].(*string), fc.Args["mimeTypes"].([]string), fc.Args["sizeMin"].(*int32), fc.Args["sizeMax"].(*int32), fc.Args["dateFrom"].(*string), fc.Args["dateTo"].(*string), fc.Args["uploaderName"].(*string), fc.Args["folderId"].(*string), fc.Args["sortBy"].(*string), fc.Args["sortDirection"].(*string), fc.Args["limit"].(*int32), fc.Args["offset"].(*int32))
 		},
 		nil,
-		ec.marshalNFile2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐFileᚄ,
+		ec.marshalNSearchResult2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSearchResult,
 		true,
 		true,
 	)
@@ -4544,34 +4825,16 @@ func (ec *executionContext) fieldContext_Query_searchFiles(ctx context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_File_id(ctx, field)
-			case "filename":
-				return ec.fieldContext_File_filename(ctx, field)
-			case "filehash":
-				return ec.fieldContext_File_filehash(ctx, field)
-			case "filepath":
-				return ec.fieldContext_File_filepath(ctx, field)
-			case "filetype":
-				return ec.fieldContext_File_filetype(ctx, field)
-			case "filesize":
-				return ec.fieldContext_File_filesize(ctx, field)
-			case "isPublic":
-				return ec.fieldContext_File_isPublic(ctx, field)
-			case "isPublicShared":
-				return ec.fieldContext_File_isPublicShared(ctx, field)
-			case "publicShareEnabledAt":
-				return ec.fieldContext_File_publicShareEnabledAt(ctx, field)
-			case "publicShareEnabledBy":
-				return ec.fieldContext_File_publicShareEnabledBy(ctx, field)
-			case "folder":
-				return ec.fieldContext_File_folder(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_File_createdAt(ctx, field)
-			case "owner":
-				return ec.fieldContext_File_owner(ctx, field)
+			case "files":
+				return ec.fieldContext_SearchResult_files(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_SearchResult_totalCount(ctx, field)
+			case "hasMore":
+				return ec.fieldContext_SearchResult_hasMore(ctx, field)
+			case "facets":
+				return ec.fieldContext_SearchResult_facets(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SearchResult", field.Name)
 		},
 	}
 	defer func() {
@@ -5076,6 +5339,387 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _SearchFacets_mimeTypes(ctx context.Context, field graphql.CollectedField, obj *model.SearchFacets) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchFacets_mimeTypes,
+		func(ctx context.Context) (any, error) {
+			return obj.MimeTypes, nil
+		},
+		nil,
+		ec.marshalNMimeTypeFacet2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐMimeTypeFacetᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchFacets_mimeTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchFacets",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_MimeTypeFacet_type(ctx, field)
+			case "count":
+				return ec.fieldContext_MimeTypeFacet_count(ctx, field)
+			case "category":
+				return ec.fieldContext_MimeTypeFacet_category(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MimeTypeFacet", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchFacets_uploaders(ctx context.Context, field graphql.CollectedField, obj *model.SearchFacets) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchFacets_uploaders,
+		func(ctx context.Context) (any, error) {
+			return obj.Uploaders, nil
+		},
+		nil,
+		ec.marshalNUploaderFacet2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐUploaderFacetᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchFacets_uploaders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchFacets",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "username":
+				return ec.fieldContext_UploaderFacet_username(ctx, field)
+			case "userId":
+				return ec.fieldContext_UploaderFacet_userId(ctx, field)
+			case "count":
+				return ec.fieldContext_UploaderFacet_count(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UploaderFacet", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchFacets_sizeBuckets(ctx context.Context, field graphql.CollectedField, obj *model.SearchFacets) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchFacets_sizeBuckets,
+		func(ctx context.Context) (any, error) {
+			return obj.SizeBuckets, nil
+		},
+		nil,
+		ec.marshalNSizeBucketFacet2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSizeBucketFacetᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchFacets_sizeBuckets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchFacets",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "range":
+				return ec.fieldContext_SizeBucketFacet_range(ctx, field)
+			case "min":
+				return ec.fieldContext_SizeBucketFacet_min(ctx, field)
+			case "max":
+				return ec.fieldContext_SizeBucketFacet_max(ctx, field)
+			case "count":
+				return ec.fieldContext_SizeBucketFacet_count(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SizeBucketFacet", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchResult_files(ctx context.Context, field graphql.CollectedField, obj *model.SearchResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchResult_files,
+		func(ctx context.Context) (any, error) {
+			return obj.Files, nil
+		},
+		nil,
+		ec.marshalNFile2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐFileᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchResult_files(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_File_id(ctx, field)
+			case "filename":
+				return ec.fieldContext_File_filename(ctx, field)
+			case "filehash":
+				return ec.fieldContext_File_filehash(ctx, field)
+			case "filepath":
+				return ec.fieldContext_File_filepath(ctx, field)
+			case "filetype":
+				return ec.fieldContext_File_filetype(ctx, field)
+			case "filesize":
+				return ec.fieldContext_File_filesize(ctx, field)
+			case "isPublic":
+				return ec.fieldContext_File_isPublic(ctx, field)
+			case "isPublicShared":
+				return ec.fieldContext_File_isPublicShared(ctx, field)
+			case "publicShareEnabledAt":
+				return ec.fieldContext_File_publicShareEnabledAt(ctx, field)
+			case "publicShareEnabledBy":
+				return ec.fieldContext_File_publicShareEnabledBy(ctx, field)
+			case "folder":
+				return ec.fieldContext_File_folder(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_File_createdAt(ctx, field)
+			case "owner":
+				return ec.fieldContext_File_owner(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchResult_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SearchResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchResult_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchResult_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchResult_hasMore(ctx context.Context, field graphql.CollectedField, obj *model.SearchResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchResult_hasMore,
+		func(ctx context.Context) (any, error) {
+			return obj.HasMore, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchResult_hasMore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SearchResult_facets(ctx context.Context, field graphql.CollectedField, obj *model.SearchResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SearchResult_facets,
+		func(ctx context.Context) (any, error) {
+			return obj.Facets, nil
+		},
+		nil,
+		ec.marshalNSearchFacets2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSearchFacets,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SearchResult_facets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "mimeTypes":
+				return ec.fieldContext_SearchFacets_mimeTypes(ctx, field)
+			case "uploaders":
+				return ec.fieldContext_SearchFacets_uploaders(ctx, field)
+			case "sizeBuckets":
+				return ec.fieldContext_SearchFacets_sizeBuckets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SearchFacets", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SizeBucketFacet_range(ctx context.Context, field graphql.CollectedField, obj *model.SizeBucketFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SizeBucketFacet_range,
+		func(ctx context.Context) (any, error) {
+			return obj.Range, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SizeBucketFacet_range(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SizeBucketFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SizeBucketFacet_min(ctx context.Context, field graphql.CollectedField, obj *model.SizeBucketFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SizeBucketFacet_min,
+		func(ctx context.Context) (any, error) {
+			return obj.Min, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SizeBucketFacet_min(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SizeBucketFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SizeBucketFacet_max(ctx context.Context, field graphql.CollectedField, obj *model.SizeBucketFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SizeBucketFacet_max,
+		func(ctx context.Context) (any, error) {
+			return obj.Max, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint32,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SizeBucketFacet_max(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SizeBucketFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SizeBucketFacet_count(ctx context.Context, field graphql.CollectedField, obj *model.SizeBucketFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SizeBucketFacet_count,
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SizeBucketFacet_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SizeBucketFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UploadIntent_uploadUrl(ctx context.Context, field graphql.CollectedField, obj *model.UploadIntent) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5129,6 +5773,93 @@ func (ec *executionContext) fieldContext_UploadIntent_uploadToken(_ context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploaderFacet_username(ctx context.Context, field graphql.CollectedField, obj *model.UploaderFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UploaderFacet_username,
+		func(ctx context.Context) (any, error) {
+			return obj.Username, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UploaderFacet_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploaderFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploaderFacet_userId(ctx context.Context, field graphql.CollectedField, obj *model.UploaderFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UploaderFacet_userId,
+		func(ctx context.Context) (any, error) {
+			return obj.UserID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UploaderFacet_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploaderFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploaderFacet_count(ctx context.Context, field graphql.CollectedField, obj *model.UploaderFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UploaderFacet_count,
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		ec.marshalNInt2int32,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UploaderFacet_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploaderFacet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7403,6 +8134,55 @@ func (ec *executionContext) _Folder(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var mimeTypeFacetImplementors = []string{"MimeTypeFacet"}
+
+func (ec *executionContext) _MimeTypeFacet(ctx context.Context, sel ast.SelectionSet, obj *model.MimeTypeFacet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mimeTypeFacetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MimeTypeFacet")
+		case "type":
+			out.Values[i] = ec._MimeTypeFacet_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._MimeTypeFacet_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "category":
+			out.Values[i] = ec._MimeTypeFacet_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -8052,6 +8832,160 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var searchFacetsImplementors = []string{"SearchFacets"}
+
+func (ec *executionContext) _SearchFacets(ctx context.Context, sel ast.SelectionSet, obj *model.SearchFacets) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchFacetsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SearchFacets")
+		case "mimeTypes":
+			out.Values[i] = ec._SearchFacets_mimeTypes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uploaders":
+			out.Values[i] = ec._SearchFacets_uploaders(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sizeBuckets":
+			out.Values[i] = ec._SearchFacets_sizeBuckets(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var searchResultImplementors = []string{"SearchResult"}
+
+func (ec *executionContext) _SearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.SearchResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SearchResult")
+		case "files":
+			out.Values[i] = ec._SearchResult_files(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._SearchResult_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasMore":
+			out.Values[i] = ec._SearchResult_hasMore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "facets":
+			out.Values[i] = ec._SearchResult_facets(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sizeBucketFacetImplementors = []string{"SizeBucketFacet"}
+
+func (ec *executionContext) _SizeBucketFacet(ctx context.Context, sel ast.SelectionSet, obj *model.SizeBucketFacet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sizeBucketFacetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SizeBucketFacet")
+		case "range":
+			out.Values[i] = ec._SizeBucketFacet_range(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "min":
+			out.Values[i] = ec._SizeBucketFacet_min(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "max":
+			out.Values[i] = ec._SizeBucketFacet_max(ctx, field, obj)
+		case "count":
+			out.Values[i] = ec._SizeBucketFacet_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var uploadIntentImplementors = []string{"UploadIntent"}
 
 func (ec *executionContext) _UploadIntent(ctx context.Context, sel ast.SelectionSet, obj *model.UploadIntent) graphql.Marshaler {
@@ -8070,6 +9004,55 @@ func (ec *executionContext) _UploadIntent(ctx context.Context, sel ast.Selection
 			}
 		case "uploadToken":
 			out.Values[i] = ec._UploadIntent_uploadToken(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var uploaderFacetImplementors = []string{"UploaderFacet"}
+
+func (ec *executionContext) _UploaderFacet(ctx context.Context, sel ast.SelectionSet, obj *model.UploaderFacet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, uploaderFacetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UploaderFacet")
+		case "username":
+			out.Values[i] = ec._UploaderFacet_username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "userId":
+			out.Values[i] = ec._UploaderFacet_userId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._UploaderFacet_count(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -8909,6 +9892,60 @@ func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) marshalNMimeTypeFacet2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐMimeTypeFacetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MimeTypeFacet) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMimeTypeFacet2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐMimeTypeFacet(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMimeTypeFacet2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐMimeTypeFacet(ctx context.Context, sel ast.SelectionSet, v *model.MimeTypeFacet) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MimeTypeFacet(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPublicFile2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐPublicFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PublicFile) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -9017,6 +10054,84 @@ func (ec *executionContext) marshalNPublicFileStats2ᚖgithubᚗcomᚋrival231�
 	return ec._PublicFileStats(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNSearchFacets2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSearchFacets(ctx context.Context, sel ast.SelectionSet, v *model.SearchFacets) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SearchFacets(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSearchResult2githubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSearchResult(ctx context.Context, sel ast.SelectionSet, v model.SearchResult) graphql.Marshaler {
+	return ec._SearchResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSearchResult2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.SearchResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SearchResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSizeBucketFacet2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSizeBucketFacetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SizeBucketFacet) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSizeBucketFacet2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSizeBucketFacet(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSizeBucketFacet2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐSizeBucketFacet(ctx context.Context, sel ast.SelectionSet, v *model.SizeBucketFacet) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SizeBucketFacet(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9061,6 +10176,60 @@ func (ec *executionContext) marshalNUploadIntent2ᚖgithubᚗcomᚋrival231ᚋBa
 		return graphql.Null
 	}
 	return ec._UploadIntent(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUploaderFacet2ᚕᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐUploaderFacetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UploaderFacet) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUploaderFacet2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐUploaderFacet(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNUploaderFacet2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐUploaderFacet(ctx context.Context, sel ast.SelectionSet, v *model.UploaderFacet) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UploaderFacet(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
@@ -9466,6 +10635,60 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	_ = ctx
 	res := graphql.MarshalID(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint32(ctx context.Context, v any) (*int32, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt32(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint32(ctx context.Context, sel ast.SelectionSet, v *int32) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt32(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

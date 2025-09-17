@@ -48,6 +48,38 @@ type File {
   owner: User!
 }
 
+type SearchResult {
+  files: [File!]!
+  totalCount: Int!
+  hasMore: Boolean!
+  facets: SearchFacets!
+}
+
+type SearchFacets {
+  mimeTypes: [MimeTypeFacet!]!
+  uploaders: [UploaderFacet!]!
+  sizeBuckets: [SizeBucketFacet!]!
+}
+
+type MimeTypeFacet {
+  type: String!
+  count: Int!
+  category: String!
+}
+
+type UploaderFacet {
+  username: String!
+  userId: String!
+  count: Int!
+}
+
+type SizeBucketFacet {
+  range: String!
+  min: Int!
+  max: Int
+  count: Int!
+}
+
 type Content{
   sha256: String!
   storage_key: String!
@@ -144,7 +176,20 @@ type Query {
   # File Management
   listFiles(folderId: ID): [File!]!
   getFile(fileId: ID!): File
-  searchFiles(query: String!): [File!]!
+  searchFiles(
+    query: String
+    mimeTypes: [String!]
+    sizeMin: Int
+    sizeMax: Int
+    dateFrom: String
+    dateTo: String
+    uploaderName: String
+    folderId: ID
+    sortBy: String
+    sortDirection: String
+    limit: Int
+    offset: Int
+  ): SearchResult!
   listSharedFiles: [FileShares!]!
   
   # Public Files
