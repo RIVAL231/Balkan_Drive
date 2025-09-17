@@ -15,6 +15,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -151,6 +152,9 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, oldPassword strin
 
 // UploadFile is the resolver for the uploadFile field.
 func (r *mutationResolver) UploadFile(ctx context.Context, filename string, filetype string, filePath string, filesize int32, isPublic bool, file graphql.Upload) (*model.UploadIntent, error) {
+	// Load config
+	cfg := config.Load()
+
 	// Get authenticated user
 	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
@@ -177,7 +181,12 @@ func (r *mutationResolver) UploadFile(ctx context.Context, filename string, file
 		return nil, fmt.Errorf("failed to check content: %v", err)
 	}
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("eu-north-1"),
+		Region: aws.String(cfg.AWSRegion),
+		Credentials: credentials.NewStaticCredentials(
+			cfg.AWSAccessKeyID,
+			cfg.AWSSecretAccessKey,
+			"", // token not needed for static credentials
+		),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS session: %v", err)
@@ -195,7 +204,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, filename string, file
 			return nil, fmt.Errorf("failed to update ref_count: %v", err)
 		}
 		req, _ := s3Client.GetObjectRequest(&s3.GetObjectInput{
-			Bucket: aws.String("go-drive-v2"),
+			Bucket: aws.String(cfg.S3Bucket),
 			Key:    aws.String(storageKey),
 		})
 		uploadURL, err = req.Presign(15 * time.Minute)
@@ -205,7 +214,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, filename string, file
 	} else {
 		storageKey = "uploads/" + filehash
 		_, err = s3Client.PutObject(&s3.PutObjectInput{
-			Bucket:      aws.String("go-drive-v2"),
+			Bucket:      aws.String(cfg.S3Bucket),
 			Key:         aws.String(storageKey),
 			Body:        bytes.NewReader(fileContent.Bytes()),
 			ContentType: aws.String(filetype),
@@ -214,7 +223,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, filename string, file
 			return nil, fmt.Errorf("failed to upload file to S3: %v", err)
 		}
 		req, _ := s3Client.GetObjectRequest(&s3.GetObjectInput{
-			Bucket: aws.String("go-drive-v2"),
+			Bucket: aws.String(cfg.S3Bucket),
 			Key:    aws.String(storageKey),
 		})
 		uploadURL, err = req.Presign(15 * time.Minute)
@@ -334,6 +343,11 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, fileID string) (bool,
 		// Delete from S3
 		sess, _ := session.NewSession(&aws.Config{
 			Region: aws.String(cfg.AWSRegion),
+			Credentials: credentials.NewStaticCredentials(
+				cfg.AWSAccessKeyID,
+				cfg.AWSSecretAccessKey,
+				"", // token not needed for static credentials
+			),
 		})
 		s3Client := s3.New(sess)
 
@@ -1268,6 +1282,61 @@ func (r *queryResolver) GetFileDownloadStats(ctx context.Context, fileID string)
 		TotalDownloads: totalDownloads,
 		Downloads:      downloads,
 	}, nil
+}
+
+// GetDownloadURL is the resolver for the getDownloadUrl field.
+func (r *queryResolver) GetDownloadURL(ctx context.Context, fileID string) (string, error) {
+	user, err := middleware.GetUserFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("user not authenticated: %v", err)
+	}
+
+	// Query file and get the storage key from content table
+	var filename, filehash string
+	var isPublic bool
+	var ownerID string
+	query := `
+		SELECT f.filename, f.filehash, f.is_public, f.owner_id
+		FROM files f
+		WHERE f.id = $1 AND (f.owner_id = $2 OR f.is_public = true OR 
+			EXISTS(SELECT 1 FROM file_shares fs WHERE fs.file_id = f.id AND fs.shared_with = $2))
+	`
+
+	err = r.DB.QueryRow(ctx, query, fileID, user.ID).Scan(
+		&filename, &filehash, &isPublic, &ownerID,
+	)
+	if err != nil {
+		return "", fmt.Errorf("file not found or access denied: %v", err)
+	}
+
+	// Get storage key from content table
+	var storageKey string
+	err = r.DB.QueryRow(ctx, "SELECT storage_key FROM content WHERE sha256 = $1", filehash).Scan(&storageKey)
+	if err != nil {
+		return "", fmt.Errorf("content not found: %v", err)
+	}
+
+	// Create AWS session and S3 client
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("eu-north-1"),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create AWS session: %v", err)
+	}
+	s3Client := s3.New(sess)
+
+	// Generate a presigned URL for download (valid for 1 hour)
+	req, _ := s3Client.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String("go-drive-v2"),
+		Key:    aws.String(storageKey),
+	})
+
+	downloadURL, err := req.Presign(1 * time.Hour)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate download URL: %v", err)
+	}
+
+	return downloadURL, nil
 }
 
 // ListFolders is the resolver for the listFolders field.

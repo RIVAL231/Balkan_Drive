@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 interface ContextMenuItem {
@@ -19,6 +19,34 @@ interface ContextMenuProps {
 
 export default function ContextMenu({ items, onClose, position }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
+  const [adjustedPosition, setAdjustedPosition] = useState(position)
+
+  useEffect(() => {
+    if (menuRef.current) {
+      const menu = menuRef.current
+      const menuRect = menu.getBoundingClientRect()
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      
+      let { x, y } = position
+      
+      // Adjust horizontal position if menu would overflow right edge
+      if (x + menuRect.width > viewportWidth) {
+        x = viewportWidth - menuRect.width - 10 // 10px margin from edge
+      }
+      
+      // Adjust vertical position if menu would overflow bottom edge
+      if (y + menuRect.height > viewportHeight) {
+        y = viewportHeight - menuRect.height - 10 // 10px margin from edge
+      }
+      
+      // Ensure menu doesn't go off left or top edge
+      x = Math.max(10, x)
+      y = Math.max(10, y)
+      
+      setAdjustedPosition({ x, y })
+    }
+  }, [position])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -47,8 +75,8 @@ export default function ContextMenu({ items, onClose, position }: ContextMenuPro
       ref={menuRef}
       className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-48"
       style={{
-        left: position.x,
-        top: position.y,
+        left: adjustedPosition.x,
+        top: adjustedPosition.y,
       }}
     >
       {items.map((item) => (

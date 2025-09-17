@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/joho/godotenv"
 
 	// "github.com/minio/minio-go/v7/pkg/cors"
 	"github.com/rival231/Balkan_Drive/graph"
@@ -33,6 +34,11 @@ func setupCORS(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 func main() {
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: Error loading .env file: %v", err)
+	}
+
 	// Load configuration
 	cfg := config.Load()
 	// Initialize resolver with database connection

@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { MoreVertical, Download, Share2, Move, Eye, EyeOff, Trash2, Globe, Lock, FolderOpen, BarChart } from "lucide-react"
 import { formatFileSize, formatRelativeTime, getFileIcon } from "@/lib/utils"
 import ContextMenu from "@/components/ui/ContextMenu"
+import { createPortal } from "react-dom"
 
 interface FileCardProps {
   file: {
@@ -38,6 +39,31 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
     x: 0,
     y: 0,
   })
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const dropdownMenuRef = useRef<HTMLDivElement>(null)
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null)
+
+  // Handle clicking outside dropdown menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMenu && 
+          menuButtonRef.current && 
+          dropdownMenuRef.current &&
+          !menuButtonRef.current.contains(event.target as Node) &&
+          !dropdownMenuRef.current.contains(event.target as Node)) {
+        setShowMenu(false)
+        setMenuPosition(null)
+      }
+    }
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMenu])
 
   const handleMenuAction = (action: string) => {
     setShowMenu(false)
@@ -154,10 +180,12 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
         onContextMenu={handleContextMenu}
       >
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          <div className="text-2xl">{getFileIcon(file.filetype)}</div>
+        <div className="flex items-start space-x-3 flex-1 min-w-0 pr-2">
+          <div className="text-2xl flex-shrink-0">{getFileIcon(file.filetype)}</div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium text-gray-900 truncate" title={file.filename}>
+            <h3 className="text-sm font-medium text-gray-900 break-all leading-tight mb-1 max-w-full" 
+                style={{ wordBreak: 'break-all', overflowWrap: 'anywhere' }}
+                title={file.filename}>
               {file.filename}
             </h3>
             <p className="text-xs text-gray-500">
@@ -168,14 +196,30 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
 
         <div className="relative">
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            ref={menuButtonRef}
+            onClick={() => {
+              if (!showMenu) {
+                const rect = menuButtonRef.current?.getBoundingClientRect()
+                if (rect) {
+                  setMenuPosition({
+                    x: rect.right - 192, // 192px = w-48 menu width
+                    y: rect.bottom + 4
+                  })
+                }
+              }
+              setShowMenu(!showMenu)
+            }}
             className="p-1 rounded-lg hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <MoreVertical className="w-4 h-4 text-gray-500" />
           </button>
 
-          {showMenu && (
-            <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+          {showMenu && menuPosition && createPortal(
+            <div 
+              ref={dropdownMenuRef}
+              className="fixed w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+              style={{ left: menuPosition.x, top: menuPosition.y }}
+            >
               <button
                 onClick={() => handleMenuAction("download")}
                 className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
@@ -227,7 +271,8 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
                 <Trash2 className="w-4 h-4" />
                 <span>Delete</span>
               </button>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </div>

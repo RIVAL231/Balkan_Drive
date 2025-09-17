@@ -8,6 +8,7 @@ require (
 	github.com/99designs/gqlgen v0.17.79
 	github.com/aws/aws-sdk-go v1.55.8
 	github.com/jackc/pgx/v5 v5.7.6
+	github.com/joho/godotenv v1.5.1
 	github.com/vektah/gqlparser/v2 v2.5.30
 	golang.org/x/crypto v0.42.0
 	golang.org/x/time v0.13.0

@@ -150,6 +150,7 @@ type Query {
   # Public Files
   listPublicFiles: [PublicFile!]!
   getFileDownloadStats(fileId: ID!): FileDownloadStats!
+  getDownloadUrl(fileId: ID!): String!
 
   # Folder management
   listFolders(parentId: ID): [Folder!]!

@@ -10,14 +10,12 @@ import { useAuth } from "@/hooks/auth"
 export default function SharedFiles() {
   const { downloadFile } = useDownloadUrl()
   const { sharedFiles, loading } = useSharedFiles()
-  console.log("All Shared Files:", sharedFiles)
+  // console.log("All Shared Files:", sharedFiles)
   const currentUserId = useAuth().user?.id
   function filterFilesSharedToCurrentUser() {
     
-    console.log("Current User ID:", currentUserId)
-    console.log("Shared By:", sharedFiles.map(file => file.sharedBy.id))
-    console.log("Shared To:", sharedFiles.map(file => file.sharedTo?.id))
-    console.log("Filtered Files:", sharedFiles.filter((sharedFile) => sharedFile.sharedTo?.id === currentUserId))
+   
+    // console.log("Filtered Files:", sharedFiles.filter((sharedFile) => sharedFile.sharedTo?.id === currentUserId))
     return sharedFiles.filter((sharedFile) => sharedFile.sharedWith?.id === currentUserId)
   }
   const userSharedFiles = filterFilesSharedToCurrentUser()
