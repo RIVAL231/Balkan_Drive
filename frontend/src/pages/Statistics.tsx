@@ -1,4 +1,4 @@
-import { HardDrive, FileText, TrendingUp, Users, Share } from "lucide-react"
+import { HardDrive, FileText, TrendingUp, Users, Share, Share2, ShareIcon } from "lucide-react"
 import { useStorageStats } from "@/hooks/useStatistics"
 import { formatFileSize } from "@/lib/utils"
 import Breadcrumb from "@/components/ui/Breadcrumb"
@@ -102,19 +102,19 @@ export default function Statistics() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <div className="text-2xl mb-2">�</div>
+            <div className="text-2xl mb-2 flex items-center justify-center"><ShareIcon /></div>
             <p className="font-medium text-gray-900">Shared by Me</p>
             <p className="text-sm text-blue-600">{stats.totalSharedFiles} files</p>
           </div>
 
           <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-2xl mb-2">�</div>
+            <div className="text-2xl mb-2 flex items-center justify-center"><Share2 /></div>
             <p className="font-medium text-gray-900">Shared with Me</p>
             <p className="text-sm text-green-600">{stats.totalReceivedShares} files</p>
           </div>
 
           <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <div className="text-2xl mb-2">�</div>
+           <div className="text-2xl mb-2 flex items-center justify-center"><HardDrive /></div>
             <p className="font-medium text-gray-900">Storage Efficiency</p>
             <p className="text-sm text-purple-600">{formatFileSize(stats.savingsBytes)} saved</p>
           </div>

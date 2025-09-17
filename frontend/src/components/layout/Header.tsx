@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Settings, LogOut, HardDrive } from "lucide-react"
+// import { Search, Settings, LogOut, HardDrive } from "lucide-react"
 import { useAuth } from "@/hooks/auth"
-
+import { HardDrive, LogOut, Settings } from "lucide-react"
+import { useStorageStats } from "@/hooks/useStatistics"
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState("")
+  // const [searchQuery, setSearchQuery] = useState("")
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { user, logout } = useAuth()
+  const { stats } = useStorageStats()
 
   const getInitials = (name: string) => {
     return name
@@ -23,7 +25,7 @@ export default function Header() {
         {/* Logo */}
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <HardDrive className="w-5 h-5 text-white" />
+            <HardDrive className="w-5 h-5 text-black" />
           </div>
           <h1 className="text-xl font-bold text-gray-900">FileStorage</h1>
         </div>
@@ -67,10 +69,10 @@ export default function Header() {
                 <div className="mt-2">
                   <div className="flex justify-between text-xs text-gray-500 mb-1">
                     <span>Storage used</span>
-                    <span></span>
+                    <span>{(stats.totalUsed / 1024 / 1024).toFixed(2)} / 10 MB</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: "21%" }}></div>
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${((stats.totalUsed / 1024 / 1024) / 10) * 100}%` }}></div>
                   </div>
                 </div>
               </div>
