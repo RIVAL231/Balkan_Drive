@@ -106,7 +106,7 @@ type ComplexityRoot struct {
 		DeleteFolder        func(childComplexity int, folderID string) int
 		Login               func(childComplexity int, email string, password string) int
 		MoveFile            func(childComplexity int, fileID string, folderID *string) int
-		Register            func(childComplexity int, username string, email string, password string) int
+		Register            func(childComplexity int, username string, email string, password string, role string) int
 		RenameFolder        func(childComplexity int, folderID string, newName string) int
 		ShareFile           func(childComplexity int, fileID string, userID string, relationship string) int
 		ShareFileByUsername func(childComplexity int, fileID string, username string, permission string) int
@@ -152,7 +152,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	Register(ctx context.Context, username string, email string, password string) (*model.AuthPayload, error)
+	Register(ctx context.Context, username string, email string, password string, role string) (*model.AuthPayload, error)
 	Login(ctx context.Context, email string, password string) (*model.AuthPayload, error)
 	ChangePassword(ctx context.Context, oldPassword string, newPassword string) (bool, error)
 	UploadFile(ctx context.Context, filename string, filetype string, filePath string, filesize int32, isPublic bool, file graphql.Upload) (*model.UploadIntent, error)
@@ -497,7 +497,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Register(childComplexity, args["username"].(string), args["email"].(string), args["password"].(string)), true
+		return e.complexity.Mutation.Register(childComplexity, args["username"].(string), args["email"].(string), args["password"].(string), args["role"].(string)), true
 	case "Mutation.renameFolder":
 		if e.complexity.Mutation.RenameFolder == nil {
 			break
@@ -986,6 +986,11 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["password"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["role"] = arg3
 	return args, nil
 }
 
@@ -2216,7 +2221,7 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 		ec.fieldContext_Mutation_register,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().Register(ctx, fc.Args["username"].(string), fc.Args["email"].(string), fc.Args["password"].(string))
+			return ec.resolvers.Mutation().Register(ctx, fc.Args["username"].(string), fc.Args["email"].(string), fc.Args["password"].(string), fc.Args["role"].(string))
 		},
 		nil,
 		ec.marshalNAuthPayload2ᚖgithubᚗcomᚋrival231ᚋBalkan_DriveᚋgraphᚋmodelᚐAuthPayload,

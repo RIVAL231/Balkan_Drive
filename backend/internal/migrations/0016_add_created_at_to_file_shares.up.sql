@@ -1,0 +1,1 @@
+ALTER TABLE file_shares ADD COLUMN created_at TIMESTAMP DEFAULT NOW();

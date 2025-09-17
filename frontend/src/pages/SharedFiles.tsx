@@ -3,16 +3,23 @@ import { useSharedFiles } from "@/hooks/useStatistics"
 import { formatFileSize, formatRelativeTime, getFileIcon } from "@/lib/utils"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
+import { useDownloadUrl } from "@/hooks/useFiles"
+ 
 
 export default function SharedFiles() {
+  const { downloadFile } = useDownloadUrl()
   const { sharedFiles, loading } = useSharedFiles()
-
+  console.log("Shared files:", sharedFiles)
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <LoadingSpinner size="lg" />
       </div>
     )
+  }
+  const handleDownload = (fileId: string, filename: string) => {
+    // Implement file download logic here
+    downloadFile(fileId, filename)
   }
 
   return (
@@ -53,10 +60,13 @@ export default function SharedFiles() {
                     </div>
 
                     <div className="flex items-center space-x-2 text-sm text-gray-500">
+                       <span onClick={() => handleDownload(sharedFile.file.id, sharedFile.file.filename)} className="px-2 hover:cursor-pointer py-1 bg-red-100 text-red-800 font-bold rounded-md text-xs">
+                         Download
+                       </span>
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
                         {sharedFile.permission}
                       </span>
-
+                      
                       {sharedFile.expiresAt && (
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-3 h-3" />

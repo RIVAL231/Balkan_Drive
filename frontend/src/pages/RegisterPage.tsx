@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [role, setRole] = useState("user")
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<{
     username?: string
@@ -62,7 +63,7 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      await register(username, email, password)
+      await register(username, email, password, role)
       toast.success("Account created successfully!")
     } catch (error: unknown) {
       toast.error((error as Error).message || "Registration failed")
@@ -126,6 +127,10 @@ export default function RegisterPage() {
               autoComplete="new-password"
             />
           </div>
+          <select name="role" value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
 
           <Button type="submit" className="w-full" loading={loading} size="lg">
             Create account

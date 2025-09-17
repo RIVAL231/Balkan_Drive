@@ -11,6 +11,7 @@ import toast from "react-hot-toast"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
+  // const [role, setRole] = useState("user")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
@@ -89,6 +90,7 @@ export default function LoginPage() {
               placeholder="Enter your password"
               autoComplete="current-password"
             />
+           
           </div>
 
           <Button type="submit" className="w-full" loading={loading} size="lg">

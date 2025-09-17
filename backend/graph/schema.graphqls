@@ -119,7 +119,7 @@ type Query {
 # ==========================
 type Mutation {
   # Auth
-  register(username: String!, email: String!, password: String!): AuthPayload!
+  register(username: String!, email: String!, password: String!, role: String!): AuthPayload!
   login(email: String!, password: String!): AuthPayload!
   changePassword(oldPassword: String!, newPassword: String!): Boolean!
 

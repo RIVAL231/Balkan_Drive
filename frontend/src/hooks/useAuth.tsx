@@ -31,8 +31,8 @@ const LOGIN_MUTATION = gql`
 `
 
 const REGISTER_MUTATION = gql`
-  mutation Register($username: String!, $email: String!, $password: String!) {
-    register(username: $username, email: $email, password: $password) {
+  mutation Register($username: String!, $email: String!, $password: String!, $role: String!) {
+    register(username: $username, email: $email, password: $password, role: $role) {
       token
       user {
         id
@@ -55,7 +55,7 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (username: string, email: string, password: string) => Promise<void>
+  register: (username: string, email: string, password: string, role: string) => Promise<void>
   logout: () => void
 }
 
@@ -125,8 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const register = async (username: string, email: string, password: string) => {
-    const { data } = await registerMutation({ variables: { username, email, password } })
+  const register = async (username: string, email: string, password: string, role: string) => {
+    const { data } = await registerMutation({ variables: { username, email, password, role } })
     localStorage.setItem("auth_token", (data as { register: { token: string; user: User } }).register.token)
     setUser((data as { register: { token: string; user: User } }).register.user)
   }

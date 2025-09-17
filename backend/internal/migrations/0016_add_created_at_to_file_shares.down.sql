@@ -1,0 +1,1 @@
+ALTER TABLE file_shares DROP COLUMN created_at;

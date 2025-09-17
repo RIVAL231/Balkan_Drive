@@ -57,7 +57,7 @@ export default function MyFiles() {
   const handleShareFile = async (fileId: string, username: string) => {
     try {
       await shareFileByUsername({
-        variables: { fileId, username },
+        variables: { fileId, username, permission: "read" },
       })
       alert('File shared successfully!')
     } catch (error) {

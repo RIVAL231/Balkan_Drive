@@ -26,18 +26,25 @@ import (
 )
 
 // Register is the resolver for the register field.
-func (r *mutationResolver) Register(ctx context.Context, username string, email string, password string) (*model.AuthPayload, error) {
+func (r *mutationResolver) Register(ctx context.Context, username string, email string, password string, role string) (*model.AuthPayload, error) {
+	// Debug logging
+	fmt.Printf("Register called with: username=%s, email=%s, role=%s\n", username, email, role)
+
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %v", err)
 	}
 
-	// Create user with default role
-	user := &model.User{Role: "user"}
+	// Create user with specified role (default to 'user' if empty)
+	if role == "" {
+		role = "user"
+	}
+
+	user := &model.User{}
 	err = r.DB.QueryRow(ctx,
-		"INSERT INTO users (username, email, password, role, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, username, email",
-		username, email, string(hashedPassword), "user").Scan(&user.ID, &user.Username, &user.Email)
+		"INSERT INTO users (username, email, password, role, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, username, email, role",
+		username, email, string(hashedPassword), role).Scan(&user.ID, &user.Username, &user.Email, &user.Role)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
@@ -529,7 +536,7 @@ func (r *mutationResolver) ShareFile(ctx context.Context, fileID string, userID 
 
 	var share model.FileShares
 	err = r.DB.QueryRow(ctx,
-		`INSERT INTO file_shares (file_id, shared_with_id, permission, shared_by_id, created_at)
+		`INSERT INTO file_shares (file_id, shared_with, permission, shared_by, created_at)
 		 VALUES ($1, $2, $3, $4, NOW())
 		 RETURNING id`,
 		fileID, userID, relationship, user.ID,
@@ -593,6 +600,8 @@ func (r *mutationResolver) ShareFile(ctx context.Context, fileID string, userID 
 
 // ShareFileByUsername is the resolver for the shareFileByUsername field.
 func (r *mutationResolver) ShareFileByUsername(ctx context.Context, fileID string, username string, permission string) (*model.FileShares, error) {
+	fmt.Printf("ShareFileByUsername called with: fileID=%s, username=%s, permission=%s\n", fileID, username, permission)
+	
 	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %v", err)
@@ -605,8 +614,10 @@ func (r *mutationResolver) ShareFileByUsername(ctx context.Context, fileID strin
 		username,
 	).Scan(&targetUserID)
 	if err != nil {
+		fmt.Printf("User not found: %v\n", err)
 		return nil, fmt.Errorf("user not found: %v", err)
 	}
+	fmt.Printf("Found target user ID: %s\n", targetUserID)
 
 	// Check if the file exists and the current user owns it
 	var fileOwnerID string
@@ -615,25 +626,31 @@ func (r *mutationResolver) ShareFileByUsername(ctx context.Context, fileID strin
 		fileID,
 	).Scan(&fileOwnerID)
 	if err != nil {
+		fmt.Printf("File not found: %v\n", err)
 		return nil, fmt.Errorf("file not found: %v", err)
 	}
+	fmt.Printf("File owner ID: %s, Current user ID: %s\n", fileOwnerID, user.ID)
 
 	if fileOwnerID != user.ID {
+		fmt.Printf("Permission denied: user %s trying to share file owned by %s\n", user.ID, fileOwnerID)
 		return nil, fmt.Errorf("permission denied: you can only share your own files")
 	}
 
 	// Create the share
 	var share model.FileShares
+	fmt.Printf("Creating share: fileID=%s, targetUserID=%s, permission=%s, sharedBy=%s\n", fileID, targetUserID, permission, user.ID)
 	err = r.DB.QueryRow(ctx,
-		`INSERT INTO file_shares (file_id, shared_with_id, permission, shared_by_id, created_at)
+		`INSERT INTO file_shares (file_id, shared_with, permission, shared_by, created_at)
 		 VALUES ($1, $2, $3, $4, NOW())
 		 RETURNING id`,
 		fileID, targetUserID, permission, user.ID,
 	).Scan(&share.ID)
 
 	if err != nil {
+		fmt.Printf("Failed to create share: %v\n", err)
 		return nil, fmt.Errorf("failed to share file: %v", err)
 	}
+	fmt.Printf("Share created successfully with ID: %s\n", share.ID)
 
 	// Populate the complete FileShares object
 	share.Permission = permission
@@ -695,7 +712,7 @@ func (r *mutationResolver) UnshareFile(ctx context.Context, fileID string, userI
 	}
 
 	_, err = r.DB.Exec(ctx,
-		"DELETE FROM file_shares WHERE file_id = $1 AND shared_with_id = $2 AND shared_by_id = $3",
+		"DELETE FROM file_shares WHERE file_id = $1 AND shared_with = $2 AND shared_by = $3",
 		fileID, userID, user.ID,
 	)
 
@@ -924,7 +941,7 @@ func (r *queryResolver) GetDownloadURL(ctx context.Context, fileID string) (stri
 		WHERE f.id = $1 AND (f.owner_id = $2 OR f.is_public = true OR 
 			EXISTS(SELECT 1 FROM file_shares fs WHERE fs.file_id = f.id AND fs.shared_with = $2))
 	`
-	
+
 	err = r.DB.QueryRow(ctx, query, fileID, user.ID).Scan(
 		&filename, &filehash, &isPublic, &ownerID,
 	)
@@ -953,7 +970,7 @@ func (r *queryResolver) GetDownloadURL(ctx context.Context, fileID string) (stri
 		Bucket: aws.String("go-drive-v2"),
 		Key:    aws.String(storageKey),
 	})
-	
+
 	downloadURL, err := req.Presign(1 * time.Hour)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate download URL: %v", err)
@@ -970,9 +987,9 @@ func (r *queryResolver) ListSharedFiles(ctx context.Context) ([]*model.FileShare
 	}
 
 	rows, err := r.DB.Query(ctx,
-		`SELECT id, file_id, shared_with_id, permission, shared_by_id 
+		`SELECT id, file_id, shared_with, permission, shared_by 
 		 FROM file_shares 
-		 WHERE shared_with_id = $1 OR shared_by_id = $1`,
+		 WHERE shared_with = $1 OR shared_by = $1`,
 		user.ID,
 	)
 	if err != nil {
@@ -988,9 +1005,66 @@ func (r *queryResolver) ListSharedFiles(ctx context.Context) ([]*model.FileShare
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan share: %v", err)
 		}
+
+		// Get file information using the fileID variable
+		var file model.File
+		var createdAt time.Time
+		var fileOwnerID string
+		err = r.DB.QueryRow(ctx,
+			"SELECT id, filename, filetype, filesize, filehash, is_public, created_at, owner_id FROM files WHERE id = $1",
+			fileID,
+		).Scan(&file.ID, &file.Filename, &file.Filetype, &file.Filesize, &file.Filehash, &file.IsPublic, &createdAt, &fileOwnerID)
+		if err != nil {
+			fmt.Printf("Error getting file for ID %s: %v\n", fileID, err)
+			continue
+		}
+
+		file.CreatedAt = createdAt.Format(time.RFC3339)
+		file.Filepath = fmt.Sprintf("uploads/%s", file.Filehash)
+
+		// Get file owner information
+		var fileOwner model.User
+		err = r.DB.QueryRow(ctx,
+			"SELECT id, username, email, COALESCE(role, 'user') FROM users WHERE id = $1",
+			fileOwnerID,
+		).Scan(&fileOwner.ID, &fileOwner.Username, &fileOwner.Email, &fileOwner.Role)
+		if err != nil {
+			fmt.Printf("Error getting file owner for ID %s: %v\n", fileOwnerID, err)
+			continue
+		}
+		file.Owner = &fileOwner
+
+		// Get shared with user information
+		var sharedWith model.User
+		err = r.DB.QueryRow(ctx,
+			"SELECT id, username, email, COALESCE(role, 'user') FROM users WHERE id = $1",
+			sharedWithID,
+		).Scan(&sharedWith.ID, &sharedWith.Username, &sharedWith.Email, &sharedWith.Role)
+		if err != nil {
+			fmt.Printf("Error getting shared_with user for ID %s: %v\n", sharedWithID, err)
+			continue
+		}
+
+		// Get shared by user information
+		var sharedBy model.User
+		err = r.DB.QueryRow(ctx,
+			"SELECT id, username, email, COALESCE(role, 'user') FROM users WHERE id = $1",
+			sharedByID,
+		).Scan(&sharedBy.ID, &sharedBy.Username, &sharedBy.Email, &sharedBy.Role)
+		if err != nil {
+			fmt.Printf("Error getting shared_by user for ID %s: %v\n", sharedByID, err)
+			continue
+		}
+
+		// Populate the share object with all details
+		share.File = &file
+		share.SharedWith = &sharedWith
+		share.SharedBy = &sharedBy
+		
 		shares = append(shares, &share)
 	}
 
+	fmt.Printf("Found %d shares\n", len(shares))
 	return shares, nil
 }
 
@@ -1139,7 +1213,7 @@ func (r *queryResolver) ListAllUsers(ctx context.Context) ([]*model.User, error)
 		}
 		users = append(users, &user)
 	}
-
+    fmt.Println("ListAllUsers called, returning users:", users)
 	return users, nil
 }
 
@@ -1197,64 +1271,3 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *queryResolver) GetDownloadUrl(ctx context.Context, fileID string) (string, error) {
-	user, err := middleware.GetUserFromContext(ctx)
-	if err != nil {
-		return "", fmt.Errorf("authentication required: %v", err)
-	}
-
-	// Get file info and check ownership or public access
-	var filehash string
-	var isPublic bool
-	var ownerID string
-	err = r.DB.QueryRow(ctx,
-		"SELECT filehash, is_public, owner_id FROM files WHERE id = $1",
-		fileID,
-	).Scan(&filehash, &isPublic, &ownerID)
-
-	if err != nil {
-		return "", fmt.Errorf("file not found: %v", err)
-	}
-
-	// Check if user has access (owner or public file)
-	if ownerID != user.ID && !isPublic {
-		// Check if file is shared with user
-		var shareExists bool
-		err = r.DB.QueryRow(ctx,
-			"SELECT EXISTS(SELECT 1 FROM file_shares WHERE file_id = $1 AND shared_with_id = $2)",
-			fileID, user.ID,
-		).Scan(&shareExists)
-		if err != nil || !shareExists {
-			return "", fmt.Errorf("access denied: you don't have permission to download this file")
-		}
-	}
-
-	// Generate S3 presigned download URL
-	cfg := config.Load()
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String(cfg.AWSRegion),
-	}))
-	s3Client := s3.New(sess)
-
-	storageKey := "uploads/" + filehash
-	req, _ := s3Client.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String("go-drive-v2"),
-		Key:    aws.String(storageKey),
-	})
-
-	downloadURL, err := req.Presign(15 * time.Minute) // 15 minute expiry
-	if err != nil {
-		return "", fmt.Errorf("failed to generate download URL: %v", err)
-	}
-
-	return downloadURL, nil
-}
-*/

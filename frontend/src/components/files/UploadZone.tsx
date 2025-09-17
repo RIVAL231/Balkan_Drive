@@ -15,7 +15,9 @@ interface UploadFile {
   status: "pending" | "uploading" | "completed" | "error"
   error?: string
 }
-
+interface UploadResponse {
+  uploadToken: string
+}
 interface UploadZoneProps {
   onUploadComplete?: () => void
 }
@@ -86,7 +88,7 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
           isPublic: false,
           file: uploadFile.file,
         },
-      })
+      }) as { data: { uploadFile: UploadResponse } }
 
       // Complete upload
       await completeUpload({

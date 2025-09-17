@@ -1,13 +1,16 @@
 import { Users, FileText, HardDrive, TrendingUp, Shield } from "lucide-react"
 import { useAdminStats } from "@/hooks/useStatistics"
+import { useAllUsers } from "@/hooks/useStatistics"
 import { formatFileSize } from "@/lib/utils"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import StatCard from "@/components/ui/StatCard"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
+import { useState } from "react"
 
 export default function AdminPanel() {
+  const [expanded, setExpanded] = useState(false)
   const { stats, loading } = useAdminStats()
-
+  const { users } = useAllUsers()
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -15,6 +18,8 @@ export default function AdminPanel() {
       </div>
     )
   }
+
+
 
   return (
     <div>
@@ -44,7 +49,7 @@ export default function AdminPanel() {
           </div>
 
           <div className="space-y-3">
-            <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
+            <button onClick={() => {setExpanded(true)}} className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="font-medium text-gray-900">View All Users</div>
               <div className="text-sm text-gray-500">Manage user accounts and permissions</div>
             </button>
@@ -75,6 +80,29 @@ export default function AdminPanel() {
           </div>
         </div>
       </div>
+
+      {/* User Management */}
+      {expanded && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900">All Users</h3>
+             <button onClick={() => setExpanded(false)} className="text-gray-400 hover:text-gray-600">
+              Close
+            </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+          
+            {users.map((user) => (
+              <div key={user.id} className="flex flex-col items-start space-y-1">
+                <div>
+                  <p className="font-medium text-gray-900"><span className="font-bold">Username:</span> {user.username}</p>
+                  <p className="text-sm text-gray-500"><span className="font-bold">Email:</span> {user.email}</p>
+                  <p className="text-sm text-gray-500"><span className="font-bold">Role:</span> {user.role}</p>
+                </div>
+              </div>
+            ))}
+           
+          </div>
+        </div>
+      )}
 
       {/* System Health */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">

@@ -28,6 +28,9 @@ interface SharedFilesData {
     file: {
       id: string
       filename: string
+      filetype: string
+      filesize: number
+      createdAt: string
     }
     sharedWith: {
       id: string
@@ -88,6 +91,16 @@ const LIST_SHARED_FILES_QUERY = gql`
     }
   }
 `
+const LIST_USERS_QUERY = gql`
+  query ListAllUsers {
+    listAllUsers {
+      id
+      username
+      email
+      role
+    }
+  }
+`
 
 export function useStorageStats() {
   const { data, loading, error } = useQuery(STORAGE_STATS_QUERY)
@@ -100,6 +113,15 @@ export function useStorageStats() {
       savingsPercentage: 0,
       fileCount: 0,
     },
+    loading,
+    error,
+  }
+}
+
+export function useAllUsers() {
+  const { data, loading, error } = useQuery(LIST_USERS_QUERY)
+  return {
+    users: (data as { listAllUsers: Array<{ id: string; username: string; email: string; role: string }> })?.listAllUsers || [],
     loading,
     error,
   }
