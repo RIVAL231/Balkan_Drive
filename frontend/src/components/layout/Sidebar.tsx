@@ -1,13 +1,14 @@
 "use client"
 
 import { NavLink } from "react-router-dom"
-import { Folder, Share2, BarChart3, Shield } from "lucide-react"
+import { Folder, Share2, Globe, BarChart3, Shield } from "lucide-react"
 import { useAuth } from "@/hooks/auth"
 import { cn } from "@/lib/utils"
 
 const navigation = [
   { name: "My Files", href: "/files", icon: Folder },
   { name: "Shared Files", href: "/shared", icon: Share2 },
+  { name: "Public Files", href: "/public", icon: Globe },
   { name: "Statistics", href: "/statistics", icon: BarChart3 },
 ]
 

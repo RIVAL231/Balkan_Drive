@@ -1,4 +1,4 @@
-import { HardDrive, FileText, TrendingUp } from "lucide-react"
+import { HardDrive, FileText, TrendingUp, Users, Share } from "lucide-react"
 import { useStorageStats } from "@/hooks/useStatistics"
 import { formatFileSize } from "@/lib/utils"
 import Breadcrumb from "@/components/ui/Breadcrumb"
@@ -17,7 +17,7 @@ export default function Statistics() {
     )
   }
 
-  const storageLimit = 10 * 1024 * 1024 * 1024 // 10GB in bytes
+  const storageLimit = 10 * 1024 * 1024 // 10MB in bytes (as per the app limit)
   const usagePercentage = (stats.totalUsed / storageLimit) * 100
 
   return (
@@ -25,7 +25,7 @@ export default function Statistics() {
       <Breadcrumb items={[{ label: "Statistics" }]} />
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <StatCard title="Total Files" value={stats.fileCount} icon={<FileText className="w-6 h-6" />} />
 
         <StatCard
@@ -42,9 +42,15 @@ export default function Statistics() {
         />
 
         <StatCard
-          title="Bytes Saved"
-          value={formatFileSize(stats.savingsBytes)}
-          icon={<TrendingUp className="w-6 h-6" />}
+          title="Files Shared"
+          value={stats.totalSharedFiles}
+          icon={<Share className="w-6 h-6" />}
+        />
+
+        <StatCard
+          title="Shared With Me"
+          value={stats.totalReceivedShares}
+          icon={<Users className="w-6 h-6" />}
         />
       </div>
 
@@ -90,27 +96,27 @@ export default function Statistics() {
         </div>
       </div>
 
-      {/* File Type Breakdown */}
+      {/* File Sharing Overview */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">File Type Breakdown</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">File Sharing Overview</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl mb-2">📄</div>
-            <p className="font-medium text-gray-900">Documents</p>
-            <p className="text-sm text-gray-500">45% of files</p>
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <div className="text-2xl mb-2">�</div>
+            <p className="font-medium text-gray-900">Shared by Me</p>
+            <p className="text-sm text-blue-600">{stats.totalSharedFiles} files</p>
           </div>
 
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl mb-2">🖼️</div>
-            <p className="font-medium text-gray-900">Images</p>
-            <p className="text-sm text-gray-500">35% of files</p>
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <div className="text-2xl mb-2">�</div>
+            <p className="font-medium text-gray-900">Shared with Me</p>
+            <p className="text-sm text-green-600">{stats.totalReceivedShares} files</p>
           </div>
 
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl mb-2">📹</div>
-            <p className="font-medium text-gray-900">Videos</p>
-            <p className="text-sm text-gray-500">20% of files</p>
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <div className="text-2xl mb-2">�</div>
+            <p className="font-medium text-gray-900">Storage Efficiency</p>
+            <p className="text-sm text-purple-600">{formatFileSize(stats.savingsBytes)} saved</p>
           </div>
         </div>
       </div>

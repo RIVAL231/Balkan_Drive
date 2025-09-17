@@ -1,8 +1,12 @@
 # ==========================
-# User
+# Scalars
 # ==========================
 scalar DateTime
 scalar Upload
+
+# ==========================
+# User
+# ==========================
 type User {
   id: ID!
   username: String!
@@ -16,6 +20,7 @@ type AuthPayload {
   token: String!
   user: User!
 }
+
 type Folder {
   id: ID!
   owner: User!
@@ -23,6 +28,7 @@ type Folder {
   parent: Folder
   createdAt: DateTime!
 }
+
 # ==========================
 # File
 # ==========================
@@ -34,6 +40,9 @@ type File {
   filetype: String!
   filesize: Int!
   isPublic: Boolean!
+  isPublicShared: Boolean!
+  publicShareEnabledAt: DateTime
+  publicShareEnabledBy: User
   folder: Folder
   createdAt: DateTime!
   owner: User!
@@ -58,22 +67,50 @@ type UploadIntent {
 # ==========================
 type FileShares{
   id: ID!
-  file: File!
-  sharedWith: User!
+  file: File
+  sharedWith: User
   permission: String!
-  sharedBy: User!
+  sharedBy: User
   expiresAt: DateTime
+}
+
+# ==========================
+# Public File Sharing
+# ==========================
+type PublicFile {
+  id: ID!
+  filename: String!
+  filetype: String!
+  filesize: Int!
+  createdAt: DateTime!
+  owner: User!
+  downloadCount: Int!
+  publicSharedAt: DateTime!
+}
+
+type FileDownload {
+  id: ID!
+  downloadedBy: User
+  downloadedAt: DateTime!
+  ipAddress: String
+}
+
+type FileDownloadStats {
+  totalDownloads: Int!
+  downloads: [FileDownload!]!
 }
 
 # ==========================
 # Statistics
 # ==========================
-type StorageStatistics {
+type UserStatistics {
   totalUsed: Int!
   originalSize: Int!
   savingsBytes: Int!
   savingsPercentage: Float!
   fileCount: Int!
+  totalSharedFiles: Int!
+  totalReceivedShares: Int!
 }
 
 type AdminStatistics {
@@ -81,35 +118,48 @@ type AdminStatistics {
   totalFiles: Int!
   totalStorage: Int!
   totalSavings: Int!
+  totalPublicFiles: Int!
+  totalPublicDownloads: Int!
+  topDownloadedFiles: [PublicFileStats!]!
+  recentDownloads: [FileDownload!]!
+}
+
+type PublicFileStats {
+  id: ID!
+  filename: String!
+  downloadCount: Int!
+  owner: User!
+  publicSharedAt: DateTime!
 }
 
 # ==========================
 # Queries
 # ==========================
 type Query {
-  # Auth
+  # User Management
   me: User!
-  getUser(userId: ID!): User
-
-  # File ops
-  getFile(fileId: ID!): File
-  listFiles(folder: String, isPublic: Boolean, ownerId: ID): [File!]!
-  searchFiles(query: String!): [File!]!
-  getDownloadUrl(fileId: ID!): String!
-
-  # Sharing
-  listSharedFiles: [FileShares!]!
-
-  # Folders
-  listFolders(parentId: ID): [Folder!]!
-
-  # Statistics
-  storageStats: StorageStatistics!
-  
-  # Admin queries
-  adminStats: AdminStatistics!
+  listUsers: [User!]!
   listAllUsers: [User!]!
-  listAllFiles: [File!]!
+
+  # File Management
+  listFiles(folderId: ID): [File!]!
+  getFile(fileId: ID!): File
+  searchFiles(query: String!): [File!]!
+  listSharedFiles: [FileShares!]!
+  
+  # Public Files
+  listPublicFiles: [PublicFile!]!
+  getFileDownloadStats(fileId: ID!): FileDownloadStats!
+
+  # Folder management
+  listFolders(parentId: ID): [Folder!]!
+  
+  # Statistics
+  getUserStatistics: UserStatistics!
+  
+  # Admin
+  getAdminStatistics: AdminStatistics!
+  getAllFiles: [File!]!
 }
 
 
@@ -139,5 +189,10 @@ type Mutation {
   shareFile(fileId: ID!, userId: ID!, relationship: String!): FileShares!
   shareFileByUsername(fileId: ID!, username: String!, permission: String!): FileShares!
   unshareFile(fileId: ID!, userId: ID!): Boolean!
+  
+  # Public Sharing
+  shareFilePublicly(fileId: ID!): Boolean!
+  unshareFilePublicly(fileId: ID!): Boolean!
+  downloadPublicFile(fileId: ID!): String!
  
 }

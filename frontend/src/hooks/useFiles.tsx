@@ -9,6 +9,12 @@ interface FileData {
     filetype: string
     filesize: number
     isPublic: boolean
+    isPublicShared: boolean
+    publicShareEnabledAt?: string
+    publicShareEnabledBy?: {
+      id: string
+      username: string
+    }
     filepath: string
     filehash: string
     createdAt: string
@@ -44,13 +50,19 @@ interface DownloadData {
 }
 
 const LIST_FILES_QUERY = gql`
-  query ListFiles($folder: String, $isPublic: Boolean, $ownerId: ID) {
-    listFiles(folder: $folder, isPublic: $isPublic, ownerId: $ownerId) {
+  query ListFiles($folderId: ID) {
+    listFiles(folderId: $folderId) {
       id
       filename
       filetype
       filesize
       isPublic
+      isPublicShared
+      publicShareEnabledAt
+      publicShareEnabledBy {
+        id
+        username
+      }
       filepath
       filehash
       createdAt
@@ -203,9 +215,9 @@ const MOVE_FILE_MUTATION = gql`
   }
 `
 
-export function useFiles(folder?: string) {
+export function useFiles(folderId?: string) {
   const { data, loading, error, refetch } = useQuery(LIST_FILES_QUERY, {
-    variables: { folder },
+    variables: { folderId },
   })
 
   return {

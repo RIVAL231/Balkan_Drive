@@ -4,12 +4,39 @@ import { formatFileSize, formatRelativeTime, getFileIcon } from "@/lib/utils"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 import { useDownloadUrl } from "@/hooks/useFiles"
+import { useAuth } from "@/hooks/auth"
  
 
 export default function SharedFiles() {
   const { downloadFile } = useDownloadUrl()
   const { sharedFiles, loading } = useSharedFiles()
-  console.log("Shared files:", sharedFiles)
+  console.log("All Shared Files:", sharedFiles)
+  const currentUserId = useAuth().user?.id
+  function filterFilesSharedToCurrentUser() {
+    
+    console.log("Current User ID:", currentUserId)
+    console.log("Shared By:", sharedFiles.map(file => file.sharedBy.id))
+    console.log("Shared To:", sharedFiles.map(file => file.sharedTo?.id))
+    console.log("Filtered Files:", sharedFiles.filter((sharedFile) => sharedFile.sharedTo?.id === currentUserId))
+    return sharedFiles.filter((sharedFile) => sharedFile.sharedWith?.id === currentUserId)
+  }
+  const userSharedFiles = filterFilesSharedToCurrentUser()
+  console.log("User Shared Files:", userSharedFiles)
+  if (userSharedFiles.length === 0 && !loading) {
+    return (
+      <div>
+        <Breadcrumb items={[{ label: "Shared Files" }]} />
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Share2 className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No shared files</h3>
+          <p className="text-gray-500">Files shared with you will appear here</p>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">

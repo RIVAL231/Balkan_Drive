@@ -7,6 +7,7 @@ import RegisterPage from "./pages/RegisterPage"
 import DashboardLayout from "./components/layout/DashboardLayout"
 import MyFiles from "./pages/MyFiles"
 import SharedFiles from "./pages/SharedFiles"
+import PublicFiles from "./pages/PublicFiles"
 import Statistics from "./pages/Statistics"
 import AdminPanel from "./pages/AdminPanel"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
@@ -39,6 +40,7 @@ function App() {
         <Route path="/" element={<Navigate to="/files" replace />} />
         <Route path="/files" element={<MyFiles />} />
         <Route path="/shared" element={<SharedFiles />} />
+        <Route path="/public" element={<PublicFiles />} />
         <Route path="/statistics" element={<Statistics />} />
         {user.role === "admin" && <Route path="/admin" element={<AdminPanel />} />}
         <Route path="*" element={<Navigate to="/files" replace />} />

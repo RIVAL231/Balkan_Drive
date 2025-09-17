@@ -3,10 +3,14 @@
 package model
 
 type AdminStatistics struct {
-	TotalUsers   int32 `json:"totalUsers"`
-	TotalFiles   int32 `json:"totalFiles"`
-	TotalStorage int32 `json:"totalStorage"`
-	TotalSavings int32 `json:"totalSavings"`
+	TotalUsers           int32              `json:"totalUsers"`
+	TotalFiles           int32              `json:"totalFiles"`
+	TotalStorage         int32              `json:"totalStorage"`
+	TotalSavings         int32              `json:"totalSavings"`
+	TotalPublicFiles     int32              `json:"totalPublicFiles"`
+	TotalPublicDownloads int32              `json:"totalPublicDownloads"`
+	TopDownloadedFiles   []*PublicFileStats `json:"topDownloadedFiles"`
+	RecentDownloads      []*FileDownload    `json:"recentDownloads"`
 }
 
 type AuthPayload struct {
@@ -23,24 +27,39 @@ type Content struct {
 }
 
 type File struct {
-	ID        string  `json:"id"`
-	Filename  string  `json:"filename"`
-	Filehash  string  `json:"filehash"`
-	Filepath  string  `json:"filepath"`
-	Filetype  string  `json:"filetype"`
-	Filesize  int32   `json:"filesize"`
-	IsPublic  bool    `json:"isPublic"`
-	Folder    *Folder `json:"folder,omitempty"`
-	CreatedAt string  `json:"createdAt"`
-	Owner     *User   `json:"owner"`
+	ID                   string  `json:"id"`
+	Filename             string  `json:"filename"`
+	Filehash             string  `json:"filehash"`
+	Filepath             string  `json:"filepath"`
+	Filetype             string  `json:"filetype"`
+	Filesize             int32   `json:"filesize"`
+	IsPublic             bool    `json:"isPublic"`
+	IsPublicShared       bool    `json:"isPublicShared"`
+	PublicShareEnabledAt *string `json:"publicShareEnabledAt,omitempty"`
+	PublicShareEnabledBy *User   `json:"publicShareEnabledBy,omitempty"`
+	Folder               *Folder `json:"folder,omitempty"`
+	CreatedAt            string  `json:"createdAt"`
+	Owner                *User   `json:"owner"`
+}
+
+type FileDownload struct {
+	ID           string  `json:"id"`
+	DownloadedBy *User   `json:"downloadedBy,omitempty"`
+	DownloadedAt string  `json:"downloadedAt"`
+	IPAddress    *string `json:"ipAddress,omitempty"`
+}
+
+type FileDownloadStats struct {
+	TotalDownloads int32           `json:"totalDownloads"`
+	Downloads      []*FileDownload `json:"downloads"`
 }
 
 type FileShares struct {
 	ID         string  `json:"id"`
-	File       *File   `json:"file"`
-	SharedWith *User   `json:"sharedWith"`
+	File       *File   `json:"file,omitempty"`
+	SharedWith *User   `json:"sharedWith,omitempty"`
 	Permission string  `json:"permission"`
-	SharedBy   *User   `json:"sharedBy"`
+	SharedBy   *User   `json:"sharedBy,omitempty"`
 	ExpiresAt  *string `json:"expiresAt,omitempty"`
 }
 
@@ -55,15 +74,26 @@ type Folder struct {
 type Mutation struct {
 }
 
-type Query struct {
+type PublicFile struct {
+	ID             string `json:"id"`
+	Filename       string `json:"filename"`
+	Filetype       string `json:"filetype"`
+	Filesize       int32  `json:"filesize"`
+	CreatedAt      string `json:"createdAt"`
+	Owner          *User  `json:"owner"`
+	DownloadCount  int32  `json:"downloadCount"`
+	PublicSharedAt string `json:"publicSharedAt"`
 }
 
-type StorageStatistics struct {
-	TotalUsed         int32   `json:"totalUsed"`
-	OriginalSize      int32   `json:"originalSize"`
-	SavingsBytes      int32   `json:"savingsBytes"`
-	SavingsPercentage float64 `json:"savingsPercentage"`
-	FileCount         int32   `json:"fileCount"`
+type PublicFileStats struct {
+	ID             string `json:"id"`
+	Filename       string `json:"filename"`
+	DownloadCount  int32  `json:"downloadCount"`
+	Owner          *User  `json:"owner"`
+	PublicSharedAt string `json:"publicSharedAt"`
+}
+
+type Query struct {
 }
 
 type UploadIntent struct {
@@ -77,4 +107,14 @@ type User struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
+}
+
+type UserStatistics struct {
+	TotalUsed           int32   `json:"totalUsed"`
+	OriginalSize        int32   `json:"originalSize"`
+	SavingsBytes        int32   `json:"savingsBytes"`
+	SavingsPercentage   float64 `json:"savingsPercentage"`
+	FileCount           int32   `json:"fileCount"`
+	TotalSharedFiles    int32   `json:"totalSharedFiles"`
+	TotalReceivedShares int32   `json:"totalReceivedShares"`
 }

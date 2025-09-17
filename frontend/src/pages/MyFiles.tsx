@@ -3,12 +3,14 @@
 import { useState } from "react"
 import { Plus, Upload, Grid, List } from "lucide-react"
 import { useFiles, useFolders, useFileOperations, useDownloadUrl } from "@/hooks/useFiles"
+import { useShareFilePublicly, useUnshareFilePublicly } from "@/hooks/usePublicFiles"
 import Button from "@/components/ui/Button"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import FileCard from "@/components/files/FileCard"
 import UploadZone from "@/components/files/UploadZone"
 import CreateFolderModal from "@/components/files/CreateFolderModal"
 import MoveToFolderModal from "@/components/files/MoveToFolderModal"
+import FileDownloadStatsModal from "@/components/files/FileDownloadStatsModal"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 
 interface FileType {
@@ -17,6 +19,12 @@ interface FileType {
   filetype: string
   filesize: number
   isPublic: boolean
+  isPublicShared: boolean
+  publicShareEnabledAt?: string
+  publicShareEnabledBy?: {
+    id: string
+    username: string
+  }
   createdAt: string
   owner: {
     username: string
@@ -36,14 +44,19 @@ export default function MyFiles() {
   const [folderPath, setFolderPath] = useState<{id: string, name: string}[]>([])
   const [showMoveModal, setShowMoveModal] = useState(false)
   const [fileToMove, setFileToMove] = useState<string | null>(null)
+  const [showStatsModal, setShowStatsModal] = useState(false)
+  const [statsFileId, setStatsFileId] = useState<string>("")
+  const [statsFileName, setStatsFileName] = useState<string>("")
 //   const [showCreateFolder, setShowCreateFolder] = useState(false)
 //   const [currentFolder, setCurrentFolder] = useState<string | undefined>()
 //   const [folderPath, setFolderPath] = useState<{id: string, name: string}[]>([])
 
   const { files, loading: filesLoading, refetch: refetchFiles } = useFiles(currentFolder)
   const { folders, loading: foldersLoading, refetch: refetchFolders } = useFolders(currentFolder)
-  const { deleteFile, changeVisibility, shareFileByUsername, moveFile } = useFileOperations()
+  const { deleteFile, shareFileByUsername, moveFile } = useFileOperations()
   const { downloadFile } = useDownloadUrl()
+  const { sharePublicly } = useShareFilePublicly()
+  const { unsharePublicly } = useUnshareFilePublicly()
 
   const handleUploadComplete = () => {
     refetchFiles()
@@ -84,9 +97,13 @@ export default function MyFiles() {
 
   const handleToggleVisibility = async (fileId: string, isPublic: boolean) => {
     try {
-      await changeVisibility({
-        variables: { fileId, isPublic },
-      })
+      if (isPublic) {
+        // Share file publicly
+        await sharePublicly(fileId)
+      } else {
+        // Unshare file publicly
+        await unsharePublicly(fileId)
+      }
       refetchFiles()
     } catch (error) {
       console.error('Failed to change file visibility:', error)
@@ -101,6 +118,12 @@ export default function MyFiles() {
       console.error('Failed to download file:', error)
       alert('Failed to download file')
     }
+  }
+
+  const handleShowStats = (fileId: string, fileName: string) => {
+    setStatsFileId(fileId)
+    setStatsFileName(fileName)
+    setShowStatsModal(true)
   }
 
   const handleMoveFile = async (fileId: string, folderId: string | null) => {
@@ -311,6 +334,7 @@ export default function MyFiles() {
                 onToggleVisibility={handleToggleVisibility}
                 onDownload={() => handleDownloadFile(file.id, file.filename)}
                 onMoveToFolder={handleShowMoveModal}
+                onShowStats={handleShowStats}
               />
             ))}
           </div>
@@ -331,6 +355,14 @@ export default function MyFiles() {
         onClose={() => setShowMoveModal(false)}
         onMoveToFolder={handleMoveToFolder}
         currentFolderId={currentFolder}
+      />
+
+      {/* File Download Statistics Modal */}
+      <FileDownloadStatsModal
+        isOpen={showStatsModal}
+        onClose={() => setShowStatsModal(false)}
+        fileId={statsFileId}
+        fileName={statsFileName}
       />
     </div>
   )

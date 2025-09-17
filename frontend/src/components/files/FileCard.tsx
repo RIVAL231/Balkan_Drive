@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MoreVertical, Download, Share2, Move, Eye, EyeOff, Trash2, Globe, Lock, FolderOpen } from "lucide-react"
+import { MoreVertical, Download, Share2, Move, Eye, EyeOff, Trash2, Globe, Lock, FolderOpen, BarChart } from "lucide-react"
 import { formatFileSize, formatRelativeTime, getFileIcon } from "@/lib/utils"
 import ContextMenu from "@/components/ui/ContextMenu"
 
@@ -12,6 +12,12 @@ interface FileCardProps {
     filetype: string
     filesize: number
     isPublic: boolean
+    isPublicShared: boolean
+    publicShareEnabledAt?: string
+    publicShareEnabledBy?: {
+      id: string
+      username: string
+    }
     createdAt: string
     owner: {
       username: string
@@ -22,9 +28,10 @@ interface FileCardProps {
   onToggleVisibility?: (fileId: string, isPublic: boolean) => void
   onDownload?: () => void
   onMoveToFolder?: (fileId: string) => void
+  onShowStats?: (fileId: string, fileName: string) => void
 }
 
-export default function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onMoveToFolder }: FileCardProps) {
+export default function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onMoveToFolder, onShowStats }: FileCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number }>({
     show: false,
@@ -46,10 +53,13 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
         onDelete?.(file.id)
         break
       case "toggle-visibility":
-        onToggleVisibility?.(file.id, !file.isPublic)
+        onToggleVisibility?.(file.id, !file.isPublicShared)
         break
       case "move-to-folder":
         onMoveToFolder?.(file.id)
+        break
+      case "show-stats":
+        onShowStats?.(file.id, file.filename)
         break
     }
   }
@@ -84,10 +94,16 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
     },
     {
       id: "toggle-visibility",
-      label: file.isPublic ? "Make private" : "Make public",
-      icon: file.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />,
+      label: file.isPublicShared ? "Make private" : "Make public",
+      icon: file.isPublicShared ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />,
       onClick: () => handleMenuAction("toggle-visibility"),
     },
+    ...(file.isPublicShared ? [{
+      id: "show-stats",
+      label: "View statistics",
+      icon: <BarChart className="w-4 h-4" />,
+      onClick: () => handleMenuAction("show-stats"),
+    }] : []),
     {
       id: "delete",
       label: "Delete",
@@ -188,9 +204,19 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
                 onClick={() => handleMenuAction("toggle-visibility")}
                 className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
               >
-                {file.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                <span>Make {file.isPublic ? "private" : "public"}</span>
+                {file.isPublicShared ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <span>Make {file.isPublicShared ? "private" : "public"}</span>
               </button>
+
+              {file.isPublicShared && (
+                <button
+                  onClick={() => handleMenuAction("show-stats")}
+                  className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                >
+                  <BarChart className="w-4 h-4" />
+                  <span>View statistics</span>
+                </button>
+              )}
 
               <hr className="my-1" />
 
@@ -209,7 +235,7 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
       <div className="flex items-center justify-between">
         <span className="text-xs text-gray-500">by {file.owner.username}</span>
         <div className="flex items-center space-x-1">
-          {file.isPublic ? (
+          {file.isPublicShared ? (
             <Globe className="w-3 h-3 text-green-500" />
           ) : (
             <Lock className="w-3 h-3 text-gray-400" />
