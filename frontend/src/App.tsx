@@ -10,6 +10,7 @@ import SharedFiles from "./pages/SharedFiles"
 import PublicFiles from "./pages/PublicFiles"
 import Statistics from "./pages/Statistics"
 import AdminPanel from "./pages/AdminPanel"
+import AuditLogsPage from "./pages/AuditLogsPage"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
 // import "./App.css"
 
@@ -42,6 +43,7 @@ function App() {
         <Route path="/shared" element={<SharedFiles />} />
         <Route path="/public" element={<PublicFiles />} />
         <Route path="/statistics" element={<Statistics />} />
+        <Route path="/audit" element={<AuditLogsPage />} />
         {user.role === "admin" && <Route path="/admin" element={<AdminPanel />} />}
         <Route path="*" element={<Navigate to="/files" replace />} />
       </Routes>

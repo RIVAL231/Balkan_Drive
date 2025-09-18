@@ -165,6 +165,28 @@ type PublicFileStats {
 }
 
 # ==========================
+# Audit Logs
+# ==========================
+type AuditLog {
+  id: ID!
+  user: User!
+  action: String!
+  resourceType: String!
+  resourceId: ID
+  resourceName: String
+  details: String
+  ipAddress: String
+  userAgent: String
+  createdAt: DateTime!
+}
+
+type AuditLogConnection {
+  logs: [AuditLog!]!
+  totalCount: Int!
+  hasMore: Boolean!
+}
+
+# ==========================
 # Queries
 # ==========================
 type Query {
@@ -206,6 +228,10 @@ type Query {
   # Admin
   getAdminStatistics: AdminStatistics!
   getAllFiles: [File!]!
+  
+  # Audit Logs (Admin only)
+  getAuditLogs(limit: Int, offset: Int, userId: ID, action: String, resourceType: String): AuditLogConnection!
+  getUserAuditLogs(limit: Int, offset: Int): AuditLogConnection!
 }
 
 

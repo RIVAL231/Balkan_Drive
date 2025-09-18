@@ -11,6 +11,8 @@ import FileCard from "@/components/files/FileCard"
 import SearchBar from "@/components/files/SearchBar"
 import UploadZone from "@/components/files/UploadZone"
 import CreateFolderModal from "@/components/files/CreateFolderModal"
+import RenameFolderModal from "@/components/files/RenameFolderModal"
+import ShareByUsernameModal from "@/components/files/ShareByUsernameModal"
 import MoveToFolderModal from "@/components/files/MoveToFolderModal"
 import FileDownloadStatsModal from "@/components/files/FileDownloadStatsModal"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
@@ -50,6 +52,14 @@ export default function MyFiles() {
   const [statsFileId, setStatsFileId] = useState<string>("")
   const [statsFileName, setStatsFileName] = useState<string>("")
   const [isSearchMode, setIsSearchMode] = useState(false)
+  // Navigation history stack (allow undefined for root)
+  const [folderHistory, setFolderHistory] = useState<(string | undefined)[]>([])
+  // Rename folder modal state
+  const [showRenameModal, setShowRenameModal] = useState(false)
+  const [folderToRename, setFolderToRename] = useState<{id: string, name: string} | null>(null)
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [fileToShare, setFileToShare] = useState<{id: string, name: string} | null>(null)
 
   // Initialize search with current folder context
   const { 
@@ -64,7 +74,7 @@ export default function MyFiles() {
 
   const { files, loading: filesLoading, refetch: refetchFiles } = useFiles(currentFolder)
   const { folders, refetch: refetchFolders } = useFolders(currentFolder)
-  const { deleteFile, shareFileByUsername, moveFile } = useFileOperations()
+  const { deleteFile, deleteFolder, renameFolder, shareFileByUsername, moveFile } = useFileOperations()
   const { downloadFile } = useDownloadUrl()
   const { sharePublicly } = useShareFilePublicly()
   const { unsharePublicly } = useUnshareFilePublicly()
@@ -100,7 +110,33 @@ export default function MyFiles() {
     if (isSearchMode) {
       handleClearSearch()
     }
+    // Always push the current folder to history if navigating to a different folder
+    if (folderId !== currentFolder) {
+      setFolderHistory((prev) => [...prev, currentFolder])
+    }
     handleNavigateToFolder(folderId, pathIndex)
+  }
+
+  // Back navigation handler
+  const handleBack = () => {
+    setFolderHistory((prev) => {
+      if (prev.length === 0) return prev
+      const newHistory = [...prev]
+      const lastFolder = newHistory.pop()
+      setCurrentFolder(lastFolder)
+      // Also update folderPath accordingly
+      if (lastFolder) {
+        const idx = folderPath.findIndex(f => f.id === lastFolder)
+        if (idx !== -1) {
+          setFolderPath(folderPath.slice(0, idx + 1))
+        } else {
+          setFolderPath([])
+        }
+      } else {
+        setFolderPath([])
+      }
+      return newHistory
+    })
   }
 
   const handleShowStatsModal = (fileId: string, filename: string) => {
@@ -109,15 +145,22 @@ export default function MyFiles() {
     setShowStatsModal(true)
   }
 
-  const handleShareFile = async (fileId: string, username: string) => {
+  const handleShowShareModal = (fileId: string, fileName: string) => {
+    setFileToShare({ id: fileId, name: fileName })
+    setShowShareModal(true)
+  }
+
+  const handleShareFile = async (username: string, permission: string) => {
+    if (!fileToShare) return
+
     try {
       await shareFileByUsername({
-        variables: { fileId, username, permission: "read" },
+        variables: { fileId: fileToShare.id, username, permission },
       })
-      alert('File shared successfully!')
+      // Success - the modal will close automatically
     } catch (error) {
       console.error('Failed to share file:', error)
-      alert('Failed to share file')
+      throw error // Re-throw to let the modal handle the error display
     }
   }
 
@@ -177,7 +220,8 @@ export default function MyFiles() {
   const handleFolderDoubleClick = (folderId: string) => {
     const folder = folders.find((f: FolderType) => f.id === folderId)
     if (folder) {
-      setCurrentFolder(folderId)
+      // Use handleFolderNavigation to properly update history
+      handleFolderNavigation(folderId)
       setFolderPath(prev => [...prev, { id: folderId, name: folder.name }])
     }
   }
@@ -241,6 +285,63 @@ export default function MyFiles() {
     }
   }
 
+  // Folder operations
+  const handleDeleteFolder = async (folderId: string, folderName: string) => {
+    const confirmMessage = `Are you sure you want to delete the folder "${folderName}"?\n\nNote: This will only work if the folder is empty. If the folder contains files or subfolders, please empty it first.`
+    
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    try {
+      await deleteFolder({
+        variables: { folderId },
+      })
+      refetchFolders()
+      // If we're currently in the deleted folder, navigate to parent
+      if (currentFolder === folderId) {
+        handleBack()
+      }
+    } catch (error) {
+      console.error('Failed to delete folder:', error)
+      
+      // Check if the error is about folder not being empty
+      const errorMessage = (error as Error).message || ''
+      const hasGraphQLErrors = 'graphQLErrors' in (error as object)
+      const graphQLErrors = hasGraphQLErrors ? (error as { graphQLErrors: Array<{ message: string }> }).graphQLErrors : []
+      
+      if (errorMessage.includes('folder is not empty') || 
+          graphQLErrors.some(err => err.message?.includes('folder is not empty'))) {
+        alert(`Cannot delete "${folderName}" because it contains files or subfolders.\n\nPlease empty the folder first by moving or deleting its contents.`)
+      } else {
+        alert('Failed to delete folder: ' + errorMessage)
+      }
+    }
+  }
+
+  const handleShowRenameModal = (folderId: string, folderName: string) => {
+    setFolderToRename({ id: folderId, name: folderName })
+    setShowRenameModal(true)
+  }
+
+  const handleRenameFolder = async (newName: string) => {
+    if (!folderToRename) return
+
+    try {
+      await renameFolder({
+        variables: { folderId: folderToRename.id, newName },
+      })
+      refetchFolders()
+      // Update folder path if the renamed folder is in the current path
+      setFolderPath(prev => prev.map(folder => 
+        folder.id === folderToRename.id ? { ...folder, name: newName } : folder
+      ))
+    } catch (error) {
+      console.error('Failed to rename folder:', error)
+      throw error
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -251,15 +352,25 @@ export default function MyFiles() {
 
   return (
     <div>
-      <Breadcrumb 
-        items={[
-          { label: "My Files", onClick: () => handleFolderNavigation(undefined) },
-          ...folderPath.map((folder, index) => ({
-            label: folder.name,
-            onClick: () => handleFolderNavigation(folder.id, index)
-          }))
-        ]} 
-      />
+      <div className="flex items-center mb-2">
+        <Button
+          variant="outline"
+          onClick={handleBack}
+          disabled={folderHistory.length === 0}
+          className="mr-2"
+        >
+          Back
+        </Button>
+        <Breadcrumb 
+          items={[
+            { label: "My Files", onClick: () => handleFolderNavigation(undefined) },
+            ...folderPath.map((folder, index) => ({
+              label: folder.name,
+              onClick: () => handleFolderNavigation(folder.id, index)
+            }))
+          ]}
+        />
+      </div>
 
       {/* Search Bar */}
       <div className="mb-6">
@@ -395,7 +506,7 @@ export default function MyFiles() {
               {!isSearchMode && folders.map((folder: FolderType) => (
                 <div
                   key={folder.id}
-                  className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors border-2 border-dashed border-transparent hover:border-blue-300"
+                  className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors border-2 border-dashed border-transparent hover:border-blue-300 relative group"
                   onDoubleClick={() => handleFolderDoubleClick(folder.id)}
                   onDragOver={handleFolderDragOver}
                   onDragLeave={handleFolderDragLeave}
@@ -406,11 +517,37 @@ export default function MyFiles() {
                     target.classList.remove('border-blue-500', 'bg-blue-50')
                   }}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="text-2xl">📁</div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{folder.name}</h3>
-                      <p className="text-xs text-gray-500">Folder</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-2xl">📁</div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">{folder.name}</h3>
+                        <p className="text-xs text-gray-500">Folder</p>
+                      </div>
+                    </div>
+                    
+                    {/* Folder Actions */}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleShowRenameModal(folder.id, folder.name)
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-800"
+                        title="Rename folder"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteFolder(folder.id, folder.name)
+                        }}
+                        className="p-1 hover:bg-red-100 rounded text-red-600 hover:text-red-800"
+                        title="Delete folder"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -422,10 +559,7 @@ export default function MyFiles() {
                   key={file.id}
                   file={file}
                   onShare={(fileId) => {
-                    const username = prompt('Enter username to share with:')
-                    if (username) {
-                      handleShareFile(fileId, username)
-                    }
+                    handleShowShareModal(fileId, file.filename)
                   }}
                   onDelete={handleDeleteFile}
                   onDownload={() => handleDownloadFile(file.id, file.filename)}
@@ -482,6 +616,29 @@ export default function MyFiles() {
         onClose={() => setShowStatsModal(false)}
         fileId={statsFileId}
         fileName={statsFileName}
+      />
+
+      {/* Rename Folder Modal */}
+      <RenameFolderModal
+        isOpen={showRenameModal}
+        onClose={() => {
+          setShowRenameModal(false)
+          setFolderToRename(null)
+        }}
+        onRename={handleRenameFolder}
+        currentName={folderToRename?.name || ""}
+        folderId={folderToRename?.id || ""}
+      />
+
+      {/* Share by Username Modal */}
+      <ShareByUsernameModal
+        isOpen={showShareModal}
+        onClose={() => {
+          setShowShareModal(false)
+          setFileToShare(null)
+        }}
+        onShare={handleShareFile}
+        fileName={fileToShare?.name || ""}
       />
     </div>
   )

@@ -13,6 +13,25 @@ type AdminStatistics struct {
 	RecentDownloads      []*FileDownload    `json:"recentDownloads"`
 }
 
+type AuditLog struct {
+	ID           string  `json:"id"`
+	User         *User   `json:"user"`
+	Action       string  `json:"action"`
+	ResourceType string  `json:"resourceType"`
+	ResourceID   *string `json:"resourceId,omitempty"`
+	ResourceName *string `json:"resourceName,omitempty"`
+	Details      *string `json:"details,omitempty"`
+	IPAddress    *string `json:"ipAddress,omitempty"`
+	UserAgent    *string `json:"userAgent,omitempty"`
+	CreatedAt    string  `json:"createdAt"`
+}
+
+type AuditLogConnection struct {
+	Logs       []*AuditLog `json:"logs"`
+	TotalCount int32       `json:"totalCount"`
+	HasMore    bool        `json:"hasMore"`
+}
+
 type AuthPayload struct {
 	Token string `json:"token"`
 	User  *User  `json:"user"`

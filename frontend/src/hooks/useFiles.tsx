@@ -148,6 +148,28 @@ const DELETE_FILE_MUTATION = gql`
   }
 `
 
+const DELETE_FOLDER_MUTATION = gql`
+  mutation DeleteFolder($folderId: ID!) {
+    deleteFolder(folderId: $folderId)
+  }
+`
+
+const RENAME_FOLDER_MUTATION = gql`
+  mutation RenameFolder($folderId: ID!, $newName: String!) {
+    renameFolder(folderId: $folderId, newName: $newName) {
+      id
+      name
+      createdAt
+    }
+  }
+`
+const UNSHARE_FILE = gql`
+    mutation UnshareFile($fileId: ID!, $userId: ID!) {
+      unshareFile(fileId: $fileId, userId: $userId) 
+    
+    }
+`
+
 const CHANGE_VISIBILITY_MUTATION = gql`
   mutation ChangeVisibility($fileId: ID!, $isPublic: Boolean!) {
     changeVisibility(fileId: $fileId, isPublic: $isPublic) {
@@ -228,6 +250,7 @@ export function useFiles(folderId?: string) {
   }
 }
 
+
 export function useFolders(parentId?: string) {
   const { data, loading, error, refetch } = useQuery(LIST_FOLDERS_QUERY, {
     variables: { parentId },
@@ -242,10 +265,13 @@ export function useFolders(parentId?: string) {
 }
 
 export function useFileOperations() {
+  const [unshareFile] = useMutation(UNSHARE_FILE)
   const [uploadFile] = useMutation(UPLOAD_FILE_MUTATION)
   const [completeUpload] = useMutation(COMPLETE_UPLOAD_MUTATION)
   const [createFolder] = useMutation(CREATE_FOLDER_MUTATION)
   const [deleteFile] = useMutation(DELETE_FILE_MUTATION)
+  const [deleteFolder] = useMutation(DELETE_FOLDER_MUTATION)
+  const [renameFolder] = useMutation(RENAME_FOLDER_MUTATION)
   const [changeVisibility] = useMutation(CHANGE_VISIBILITY_MUTATION)
   const [shareFileByUsername] = useMutation(SHARE_FILE_BY_USERNAME_MUTATION)
   const [moveFile] = useMutation(MOVE_FILE_MUTATION)
@@ -255,9 +281,12 @@ export function useFileOperations() {
     completeUpload,
     createFolder,
     deleteFile,
+    deleteFolder,
+    renameFolder,
     changeVisibility,
     shareFileByUsername,
     moveFile,
+    unshareFile,
   }
 }
 

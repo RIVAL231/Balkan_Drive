@@ -45,55 +45,15 @@ func AuthMiddleware(db *pgxpool.Pool) func(http.Handler) http.Handler {
 				return
 			}
 
-			// For GraphQL endpoint, allow without auth initially
-			// The resolvers will handle authentication for protected operations
-			if r.URL.Path == "/query" {
-				// Check if Authorization header exists
-				authHeader := r.Header.Get("Authorization")
-				if authHeader != "" {
-					// If header exists, validate it
-					parts := strings.Split(authHeader, " ")
-					if len(parts) == 2 && parts[0] == "Bearer" {
-						tokenString := parts[1]
-						jwtSecret := os.Getenv("JWT_SECRET")
-						if jwtSecret == "" {
-							jwtSecret = "your-development-secret-change-in-production" // Default for development
-						}
-
-						// Parse and validate token
-						token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-							return []byte(jwtSecret), nil
-						})
-
-						if err == nil && token.Valid {
-							claims, ok := token.Claims.(*Claims)
-							if ok {
-								// Verify user still exists in database
-								var userExists bool
-								err = db.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)", claims.UserID).Scan(&userExists)
-								if err == nil && userExists {
-									// Add user to context
-									user := &User{
-										ID:       claims.UserID,
-										Username: claims.Username,
-										Email:    claims.Email,
-										Role:     claims.Role,
-									}
-									ctx := context.WithValue(r.Context(), UserContextKey, user)
-									r = r.WithContext(ctx)
-								}
-							}
-						}
-					}
-				}
-				// Always continue to GraphQL handler (with or without user context)
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			// For non-GraphQL endpoints, require authentication
+			// Get token from Authorization header
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
+				// For GraphQL endpoint, allow without auth - the resolvers will handle auth checks
+				// This allows login/register mutations to work
+				if r.URL.Path == "/query" {
+					next.ServeHTTP(w, r)
+					return
+				}
 				http.Error(w, "Authorization header required", http.StatusUnauthorized)
 				return
 			}
@@ -108,7 +68,7 @@ func AuthMiddleware(db *pgxpool.Pool) func(http.Handler) http.Handler {
 			tokenString := parts[1]
 			jwtSecret := os.Getenv("JWT_SECRET")
 			if jwtSecret == "" {
-				jwtSecret = "your-development-secret-change-in-production" // Default for development
+				jwtSecret = "your-secret-key" // Default for development
 			}
 
 			// Parse and validate token

@@ -4,6 +4,7 @@ import { formatFileSize } from "@/lib/utils"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import StatCard from "@/components/ui/StatCard"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
+import AuditLogs from "@/components/audit/AuditLogs"
 import { useState } from "react"
 
 export default function AdminPanel() {
@@ -290,6 +291,12 @@ export default function AdminPanel() {
           </div>
         </div>
       )}
+
+      {/* Audit Logs */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent System Activity</h3>
+        <AuditLogs isAdmin={true} />
+      </div>
 
       {/* System Health */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
