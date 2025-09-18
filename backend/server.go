@@ -11,7 +11,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
 
-	// "github.com/minio/minio-go/v7/pkg/cors"
 	"github.com/rival231/Balkan_Drive/graph"
 	"github.com/rival231/Balkan_Drive/internal/config"
 	"github.com/rival231/Balkan_Drive/internal/middleware"
@@ -73,6 +72,13 @@ func main() {
 	// Apply middleware to GraphQL endpoint
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", setupCORS(http.HandlerFunc(rateLimitMiddleware(authMiddleware(srv)).ServeHTTP)))
+	
+	// Health check endpoint
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"healthy","service":"balkan-drive-backend"}`))
+	})
 
 	log.Printf("🚀 Server starting on http://localhost:%s", cfg.Port)
 	log.Printf("📊 GraphQL Playground: http://localhost:%s/", cfg.Port)

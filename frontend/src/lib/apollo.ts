@@ -5,9 +5,10 @@ import { onError } from "@apollo/client/link/error"
 // @ts-expect-error - apollo-upload-client doesn't have TypeScript definitions
 import UploadHttpLink from "../../node_modules/apollo-upload-client/UploadHttpLink.mjs"
 import toast from "react-hot-toast"
+import { config } from "./config"
 
 const uploadLink = new UploadHttpLink({
-  uri: "http://localhost:8080/query",
+  uri: config.apiUrl,
 })
 
 const authLink = setContext((operation, { headers }) => {
@@ -80,12 +81,54 @@ const errorLink = onError((errorResponse: unknown) => {
 
 export const apolloClient = new ApolloClient({
   link: from([errorLink, authLink, uploadLink]),
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          // Cache files queries for 5 minutes
+          files: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          sharedFiles: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          publicFiles: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          auditLogs: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+        },
+      },
+      File: {
+        keyFields: ["id"],
+      },
+      User: {
+        keyFields: ["id"],
+      },
+      AuditLog: {
+        keyFields: ["id"],
+      },
+    },
+  }),
   defaultOptions: {
     watchQuery: {
       errorPolicy: "all",
+      fetchPolicy: "cache-and-network", // Load from cache first, then network
     },
     query: {
+      errorPolicy: "all",
+      fetchPolicy: "cache-first", // Use cache when available
+    },
+    mutate: {
       errorPolicy: "all",
     },
   },

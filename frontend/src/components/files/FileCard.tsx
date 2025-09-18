@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, memo, useCallback } from "react"
 import { MoreVertical, Download, Share2, Move, Eye, EyeOff, Trash2, Globe, Lock, FolderOpen, BarChart } from "lucide-react"
 import { formatFileSize, formatRelativeTime, getFileIcon } from "@/lib/utils"
 import ContextMenu from "@/components/ui/ContextMenu"
@@ -32,7 +32,7 @@ interface FileCardProps {
   onShowStats?: (fileId: string, fileName: string) => void
 }
 
-export default function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onMoveToFolder, onShowStats }: FileCardProps) {
+function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onMoveToFolder, onShowStats }: FileCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number }>({
     show: false,
@@ -65,7 +65,7 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
     }
   }, [showMenu])
 
-  const handleMenuAction = (action: string) => {
+  const handleMenuAction = useCallback((action: string) => {
     setShowMenu(false)
 
     switch (action) {
@@ -88,16 +88,20 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
         onShowStats?.(file.id, file.filename)
         break
     }
-  }
+  }, [file.id, file.filename, file.isPublicShared, onDownload, onShare, onDelete, onToggleVisibility, onMoveToFolder, onShowStats])
 
-  const handleContextMenu = (e: React.MouseEvent) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     setContextMenu({
       show: true,
       x: e.clientX,
       y: e.clientY,
     })
-  }
+  }, [])
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu({ show: false, x: 0, y: 0 })
+  }, [])
 
   const contextMenuItems = [
     {
@@ -293,9 +297,11 @@ export default function FileCard({ file, onShare, onDelete, onToggleVisibility, 
       <ContextMenu
         items={contextMenuItems}
         position={{ x: contextMenu.x, y: contextMenu.y }}
-        onClose={() => setContextMenu({ show: false, x: 0, y: 0 })}
+        onClose={handleCloseContextMenu}
       />
     )}
   </>
   )
 }
+
+export default memo(FileCard)

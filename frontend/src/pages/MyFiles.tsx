@@ -5,6 +5,8 @@ import { Plus, Upload, Grid, List, Search } from "lucide-react"
 import { useFiles, useFolders, useFileOperations, useDownloadUrl } from "@/hooks/useFiles"
 import { useShareFilePublicly, useUnshareFilePublicly } from "@/hooks/usePublicFiles"
 import { useSearch } from "@/hooks/useSearch"
+import { useAlertModal, useConfirmModal } from "@/hooks/useModal"
+import { AlertModal, ConfirmModal } from "@/components/ui/Modal"
 import Button from "@/components/ui/Button"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import FileCard from "@/components/files/FileCard"
@@ -78,6 +80,10 @@ export default function MyFiles() {
   const { downloadFile } = useDownloadUrl()
   const { sharePublicly } = useShareFilePublicly()
   const { unsharePublicly } = useUnshareFilePublicly()
+
+  // Modal hooks
+  const alertModal = useAlertModal()
+  const confirmModal = useConfirmModal()
 
   // Determine which files to display - search results or regular files
   const displayFiles = isSearchMode && searchState.hasSearched 
@@ -176,7 +182,7 @@ export default function MyFiles() {
       refetchFiles()
     } catch (error) {
       console.error('Failed to delete file:', error)
-      alert('Failed to delete file')
+      alertModal.showAlert('Error', 'Failed to delete file', 'error')
     }
   }
 
@@ -192,7 +198,7 @@ export default function MyFiles() {
       refetchFiles()
     } catch (error) {
       console.error('Failed to change file visibility:', error)
-      alert('Failed to change file visibility')
+      alertModal.showAlert('Error', 'Failed to change file visibility', 'error')
     }
   }
 
@@ -201,7 +207,7 @@ export default function MyFiles() {
       await downloadFile(fileId, filename)
     } catch (error) {
       console.error('Failed to download file:', error)
-      alert('Failed to download file')
+      alertModal.showAlert('Error', 'Failed to download file', 'error')
     }
   }
 
@@ -213,7 +219,7 @@ export default function MyFiles() {
       refetchFiles()
     } catch (error) {
       console.error('Failed to move file:', error)
-      alert('Failed to move file: ' + (error as Error).message)
+      alertModal.showAlert('Error', `Failed to move file: ${(error as Error).message}`, 'error')
     }
   }
 
@@ -312,9 +318,13 @@ export default function MyFiles() {
       
       if (errorMessage.includes('folder is not empty') || 
           graphQLErrors.some(err => err.message?.includes('folder is not empty'))) {
-        alert(`Cannot delete "${folderName}" because it contains files or subfolders.\n\nPlease empty the folder first by moving or deleting its contents.`)
+        alertModal.showAlert(
+          'Cannot Delete Folder', 
+          `Cannot delete "${folderName}" because it contains files or subfolders.\n\nPlease empty the folder first by moving or deleting its contents.`,
+          'warning'
+        )
       } else {
-        alert('Failed to delete folder: ' + errorMessage)
+        alertModal.showAlert('Error', `Failed to delete folder: ${errorMessage}`, 'error')
       }
     }
   }
@@ -640,6 +650,28 @@ export default function MyFiles() {
         onShare={handleShareFile}
         fileName={fileToShare?.name || ""}
       />
+
+      {/* Alert and Confirm Modals */}
+      {alertModal.alertData && (
+        <AlertModal
+          isOpen={alertModal.isOpen}
+          onClose={alertModal.closeAlert}
+          title={alertModal.alertData.title}
+          message={alertModal.alertData.message}
+          type={alertModal.alertData.type}
+        />
+      )}
+      
+      {confirmModal.confirmData && (
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={confirmModal.closeConfirm}
+          title={confirmModal.confirmData.title}
+          message={confirmModal.confirmData.message}
+          onConfirm={confirmModal.confirmData.onConfirm}
+          type={confirmModal.confirmData.type}
+        />
+      )}
     </div>
   )
 }

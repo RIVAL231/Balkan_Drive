@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 	"time"
 
@@ -29,9 +30,6 @@ import (
 
 // Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, username string, email string, password string, role string) (*model.AuthPayload, error) {
-	// Debug logging
-	fmt.Printf("Register called with: username=%s, email=%s, role=%s\n", username, email, role)
-
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -302,7 +300,8 @@ func (r *mutationResolver) CompleteUpload(ctx context.Context, uploadToken strin
 	err = r.AuditLogger.LogFileUpload(ctx, ownerID,
 		file.ID, file.Filename, int64(file.Filesize), file.Filetype, nil)
 	if err != nil {
-		fmt.Printf("Audit logging error: %v\n", err)
+		// Log error but don't fail the upload
+		log.Printf("Audit logging error: %v", err)
 	}
 
 	return &file, nil
@@ -329,7 +328,7 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, fileID string) (bool,
 	// Log file deletion audit event before deletion
 	err = r.AuditLogger.LogFileDelete(ctx, user.ID, fileID, filename, nil)
 	if err != nil {
-		fmt.Printf("Audit logging error for delete: %v\n", err)
+		log.Printf("Audit logging error for delete: %v", err)
 	}
 
 	// Delete file record
@@ -371,7 +370,7 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, fileID string) (bool,
 		})
 		if err != nil {
 			// Log error but don't fail the operation
-			fmt.Printf("Failed to delete from S3: %v\n", err)
+			log.Printf("Failed to delete from S3: %v", err)
 		}
 
 		// Delete content record
@@ -628,8 +627,6 @@ func (r *mutationResolver) ShareFile(ctx context.Context, fileID string, userID 
 
 // ShareFileByUsername is the resolver for the shareFileByUsername field.
 func (r *mutationResolver) ShareFileByUsername(ctx context.Context, fileID string, username string, permission string) (*model.FileShares, error) {
-	fmt.Printf("ShareFileByUsername called with: fileID=%s, username=%s, permission=%s\n", fileID, username, permission)
-
 	user, err := middleware.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %v", err)
@@ -642,10 +639,8 @@ func (r *mutationResolver) ShareFileByUsername(ctx context.Context, fileID strin
 		username,
 	).Scan(&targetUserID)
 	if err != nil {
-		fmt.Printf("User not found: %v\n", err)
 		return nil, fmt.Errorf("user not found: %v", err)
 	}
-	fmt.Printf("Found target user ID: %s\n", targetUserID)
 
 	// Check if the file exists and the current user owns it
 	var fileOwnerID string
@@ -654,19 +649,15 @@ func (r *mutationResolver) ShareFileByUsername(ctx context.Context, fileID strin
 		fileID,
 	).Scan(&fileOwnerID)
 	if err != nil {
-		fmt.Printf("File not found: %v\n", err)
 		return nil, fmt.Errorf("file not found: %v", err)
 	}
-	fmt.Printf("File owner ID: %s, Current user ID: %s\n", fileOwnerID, user.ID)
 
 	if fileOwnerID != user.ID {
-		fmt.Printf("Permission denied: user %s trying to share file owned by %s\n", user.ID, fileOwnerID)
 		return nil, fmt.Errorf("permission denied: you can only share your own files")
 	}
 
 	// Create the share
 	var share model.FileShares
-	fmt.Printf("Creating share: fileID=%s, targetUserID=%s, permission=%s, sharedBy=%s\n", fileID, targetUserID, permission, user.ID)
 	err = r.DB.QueryRow(ctx,
 		`INSERT INTO file_shares (file_id, shared_with, permission, shared_by, created_at)
 		 VALUES ($1, $2, $3, $4, NOW())
@@ -675,10 +666,8 @@ func (r *mutationResolver) ShareFileByUsername(ctx context.Context, fileID strin
 	).Scan(&share.ID)
 
 	if err != nil {
-		fmt.Printf("Failed to create share: %v\n", err)
 		return nil, fmt.Errorf("failed to share file: %v", err)
 	}
-	fmt.Printf("Share created successfully with ID: %s\n", share.ID)
 
 	// Populate the complete FileShares object
 	share.Permission = permission
@@ -847,7 +836,7 @@ func (r *mutationResolver) DownloadPublicFile(ctx context.Context, fileID string
 		"INSERT INTO file_downloads (file_id, downloaded_by, ip_address) VALUES ($1, $2, $3)",
 		fileID, user.ID, "unknown") // TODO: Extract real IP from context
 	if err != nil {
-		fmt.Printf("Failed to record download: %v\n", err)
+		log.Printf("Failed to record download: %v", err)
 		// Don't fail the download if recording fails
 	}
 
@@ -1314,7 +1303,6 @@ func (r *queryResolver) ListSharedFiles(ctx context.Context) ([]*model.FileShare
 			fileID,
 		).Scan(&file.ID, &file.Filename, &file.Filetype, &file.Filesize, &file.Filehash, &file.IsPublic, &createdAt, &fileOwnerID)
 		if err != nil {
-			fmt.Printf("Error getting file for ID %s: %v\n", fileID, err)
 			continue
 		}
 
@@ -1328,7 +1316,6 @@ func (r *queryResolver) ListSharedFiles(ctx context.Context) ([]*model.FileShare
 			fileOwnerID,
 		).Scan(&fileOwner.ID, &fileOwner.Username, &fileOwner.Email, &fileOwner.Role)
 		if err != nil {
-			fmt.Printf("Error getting file owner for ID %s: %v\n", fileOwnerID, err)
 			continue
 		}
 		file.Owner = &fileOwner
@@ -1340,7 +1327,6 @@ func (r *queryResolver) ListSharedFiles(ctx context.Context) ([]*model.FileShare
 			sharedWithID,
 		).Scan(&sharedWith.ID, &sharedWith.Username, &sharedWith.Email, &sharedWith.Role)
 		if err != nil {
-			fmt.Printf("Error getting shared_with user for ID %s: %v\n", sharedWithID, err)
 			continue
 		}
 
@@ -1351,7 +1337,6 @@ func (r *queryResolver) ListSharedFiles(ctx context.Context) ([]*model.FileShare
 			sharedByID,
 		).Scan(&sharedBy.ID, &sharedBy.Username, &sharedBy.Email, &sharedBy.Role)
 		if err != nil {
-			fmt.Printf("Error getting shared_by user for ID %s: %v\n", sharedByID, err)
 			continue
 		}
 
@@ -1363,7 +1348,6 @@ func (r *queryResolver) ListSharedFiles(ctx context.Context) ([]*model.FileShare
 		shares = append(shares, &share)
 	}
 
-	fmt.Printf("Found %d shares\n", len(shares))
 	return shares, nil
 }
 

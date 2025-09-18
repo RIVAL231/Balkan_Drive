@@ -3,7 +3,6 @@ package audit
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -71,22 +70,7 @@ func (al *AuditLogger) LogActivity(ctx context.Context, userID string, action, r
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 	
-	resourceIDStr := ""
-	if resourceID != nil {
-		resourceIDStr = *resourceID
-	}
-	resourceNameStr := ""
-	if resourceName != nil {
-		resourceNameStr = *resourceName
-	}
-	
-	fmt.Printf("Audit Log Insert: userID=%s, action=%s, resourceType=%s, resourceID=%s, resourceName=%s\n", 
-		userID, action, resourceType, resourceIDStr, resourceNameStr)
-	
 	_, err = al.db.Exec(ctx, query, userID, action, resourceType, resourceID, resourceName, detailsJSON, ipAddress, userAgent, time.Now())
-	if err != nil {
-		fmt.Printf("Audit log insert error: %v\n", err)
-	}
 	return err
 }
 

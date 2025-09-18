@@ -1,6 +1,8 @@
 import { Share2, Calendar, User } from "lucide-react"
 import { useSharedFiles } from "@/hooks/useStatistics"
 import { formatFileSize, formatRelativeTime, getFileIcon } from "@/lib/utils"
+import { useAlertModal } from "@/hooks/useModal"
+import { AlertModal } from "@/components/ui/Modal"
 import Breadcrumb from "@/components/ui/Breadcrumb"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 import { useDownloadUrl } from "@/hooks/useFiles"
@@ -13,6 +15,9 @@ export default function SharedFiles() {
   const { sharedFiles, loading, refetch } = useSharedFiles()
   // console.log("All Shared Files:", sharedFiles)
   const currentUserId = useAuth().user?.id
+  
+  // Modal hook
+  const alertModal = useAlertModal()
 
   function filterFilesSharedToCurrentUser() {
     
@@ -57,7 +62,7 @@ export default function SharedFiles() {
       await refetch()
     } catch (error) {
       console.error('Failed to unshare file:', error)
-      alert('Failed to unshare file')
+      alertModal.showAlert('Error', 'Failed to unshare file', 'error')
     }
   }
 
@@ -192,6 +197,17 @@ export default function SharedFiles() {
           </div>
         )}
       </div>)}
+
+      {/* Alert Modal */}
+      {alertModal.alertData && (
+        <AlertModal
+          isOpen={alertModal.isOpen}
+          onClose={alertModal.closeAlert}
+          title={alertModal.alertData.title}
+          message={alertModal.alertData.message}
+          type={alertModal.alertData.type}
+        />
+      )}
     </div>
     
   )

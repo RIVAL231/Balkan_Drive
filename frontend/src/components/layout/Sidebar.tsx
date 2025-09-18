@@ -10,7 +10,7 @@ const navigation = [
   { name: "Shared Files", href: "/shared", icon: Share2 },
   { name: "Public Files", href: "/public", icon: Globe },
   { name: "Statistics", href: "/statistics", icon: BarChart3 },
-  { name: "My Activity", href: "/audit", icon: Activity },
+  // { name: "My Activity", href: "/audit", icon: Activity },
 ]
 
 export default function Sidebar() {
@@ -34,6 +34,20 @@ export default function Sidebar() {
             <span>{item.name}</span>
           </NavLink>
         ))}
+        {user?.role === "admin" && (
+          <NavLink
+            to="/audit"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                isActive ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700" : "text-gray-700 hover:bg-gray-100",
+              )
+            }
+          >
+            <Activity className="w-5 h-5" />
+            <span>My Activity</span>
+          </NavLink>
+        )}
 
         {user?.role === "admin" && (
           <NavLink

@@ -8,11 +8,9 @@ import (
 	"context"
 	"fmt"
 
-	// "github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rival231/Balkan_Drive/internal/audit"
-	// "github.com/rival231/Balkan_Drive/graph/model"
-	// "golang.org/x/crypto/bcrypt"
+	"github.com/rival231/Balkan_Drive/internal/config"
 )
 
 type Resolver struct{
@@ -20,7 +18,8 @@ type Resolver struct{
 	AuditLogger *audit.AuditLogger
 }
 func (r *Resolver) ConnectDB() error {
-	pool, err := pgxpool.New(context.Background(), "postgres://admin:admin@localhost:5432/graphqlmvp")
+	cfg := config.Load()
+	pool, err := pgxpool.New(context.Background(), cfg.GetDBConnectionString())
 	if err != nil {
 		return fmt.Errorf("unable to connect: %v", err)
 	}
@@ -28,11 +27,4 @@ func (r *Resolver) ConnectDB() error {
 	r.AuditLogger = audit.NewAuditLogger(pool)
 	return nil
 }
-// func (r *Resolver) Mutation() MutationResolver {
-// 	return &mutationResolver{r}
-// }
-// func (r *Resolver) Query() QueryResolver {
-// 	return &queryResolver{r}
-// }
 
-// The struct declarations are moved to schema.resolvers.go

@@ -1,23 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo, useCallback } from "react"
 // import { Search, Settings, LogOut, HardDrive } from "lucide-react"
 import { useAuth } from "@/hooks/auth"
 import { HardDrive, LogOut, Settings } from "lucide-react"
 import { useStorageStats } from "@/hooks/useStatistics"
-export default function Header() {
+function Header() {
   // const [searchQuery, setSearchQuery] = useState("")
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { user, logout } = useAuth()
   const { stats } = useStorageStats()
 
-  const getInitials = (name: string) => {
+  const getInitials = useCallback((name: string) => {
     return name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-  }
+  }, [])
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -96,3 +96,5 @@ export default function Header() {
     </header>
   )
 }
+
+export default memo(Header)
