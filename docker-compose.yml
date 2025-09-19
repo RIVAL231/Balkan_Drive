@@ -38,7 +38,7 @@ services:
       - DB_SSLMODE=disable
       
       # Server Configuration
-      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - JWT_SECRET=srainvkaalp2630185amrahs
       - PORT=8080
       - GIN_MODE=release
       
@@ -93,9 +93,3 @@ networks:
 volumes:
   postgres_data:
     driver: local
-
-# Environment Variables can be set in .env file or passed directly
-# Example .env file:
-# AWS_ACCESS_KEY_ID=your_key_here
-# AWS_SECRET_ACCESS_KEY=your_secret_here
-# S3_BUCKET=your_bucket_name

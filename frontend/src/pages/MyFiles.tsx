@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Upload, Grid, List, Search } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Plus, Upload, Grid, List, Search, FolderOpen, Edit, Trash2, Share, Download, Move, BarChart3 } from "lucide-react"
 import { useFiles, useFolders, useFileOperations, useDownloadUrl } from "@/hooks/useFiles"
 import { useShareFilePublicly, useUnshareFilePublicly } from "@/hooks/usePublicFiles"
 import { useSearch } from "@/hooks/useSearch"
@@ -18,6 +18,7 @@ import ShareByUsernameModal from "@/components/files/ShareByUsernameModal"
 import MoveToFolderModal from "@/components/files/MoveToFolderModal"
 import FileDownloadStatsModal from "@/components/files/FileDownloadStatsModal"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
+import ContextMenu from "@/components/ui/ContextMenu"
 
 interface FileType {
   id: string
@@ -62,6 +63,19 @@ export default function MyFiles() {
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false)
   const [fileToShare, setFileToShare] = useState<{id: string, name: string} | null>(null)
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    show: boolean
+    position: { x: number; y: number }
+    type: 'folder' | 'file'
+    item: { id: string; name: string } | null
+  }>({
+    show: false,
+    position: { x: 0, y: 0 },
+    type: 'folder',
+    item: null
+  })
 
   // Initialize search with current folder context
   const { 
@@ -91,6 +105,12 @@ export default function MyFiles() {
     : files
   
   const isLoading = isSearchMode ? searchState.isLoading : filesLoading
+
+  // Close context menu on clicks outside or when navigating
+  // Close context menu when folder changes
+  useEffect(() => {
+    closeContextMenu()
+  }, [currentFolder])
 
   const handleUploadComplete = () => {
     refetchFiles()
@@ -223,13 +243,18 @@ export default function MyFiles() {
     }
   }
 
-  const handleFolderDoubleClick = (folderId: string) => {
+  const handleFolderClick = (folderId: string) => {
     const folder = folders.find((f: FolderType) => f.id === folderId)
     if (folder) {
       // Use handleFolderNavigation to properly update history
       handleFolderNavigation(folderId)
       setFolderPath(prev => [...prev, { id: folderId, name: folder.name }])
     }
+  }
+
+  const handleFolderDoubleClick = (folderId: string) => {
+    // This is kept for compatibility, but we'll primarily use single click
+    handleFolderClick(folderId)
   }
 
   const handleNavigateToFolder = (folderId: string | undefined, folderIndex?: number) => {
@@ -327,6 +352,86 @@ export default function MyFiles() {
         alertModal.showAlert('Error', `Failed to delete folder: ${errorMessage}`, 'error')
       }
     }
+  }
+
+  // Context menu handlers
+  const handleContextMenu = (e: React.MouseEvent, type: 'folder' | 'file', item: { id: string; name: string }) => {
+    e.preventDefault()
+    e.stopPropagation() // Prevent event bubbling
+    
+    setContextMenu({
+      show: true,
+      position: { x: e.clientX, y: e.clientY },
+      type,
+      item
+    })
+  }
+
+  const closeContextMenu = () => {
+    setContextMenu(prev => ({ ...prev, show: false, item: null }))
+  }
+
+  const getFolderContextMenuItems = (folder: { id: string; name: string }) => [
+    {
+      id: 'open',
+      label: 'Open',
+      icon: <FolderOpen className="w-4 h-4" />,
+      onClick: () => handleFolderClick(folder.id)
+    },
+    {
+      id: 'rename',
+      label: 'Rename',
+      icon: <Edit className="w-4 h-4" />,
+      onClick: () => handleShowRenameModal(folder.id, folder.name)
+    },
+    {
+      id: 'delete',
+      label: 'Delete',
+      icon: <Trash2 className="w-4 h-4" />,
+      onClick: () => handleDeleteFolder(folder.id, folder.name)
+    }
+  ]
+
+  const getFileContextMenuItems = (file: { id: string; name: string }) => {
+    const fileData = displayFiles.find((f: FileType) => f.id === file.id)
+    return [
+      {
+        id: 'download',
+        label: 'Download',
+        icon: <Download className="w-4 h-4" />,
+        onClick: () => handleDownloadFile(file.id, file.name)
+      },
+      {
+        id: 'share',
+        label: 'Share with User',
+        icon: <Share className="w-4 h-4" />,
+        onClick: () => handleShowShareModal(file.id, file.name)
+      },
+      {
+        id: 'move',
+        label: 'Move to Folder',
+        icon: <Move className="w-4 h-4" />,
+        onClick: () => handleShowMoveModal(file.id)
+      },
+      {
+        id: 'stats',
+        label: 'View Statistics',
+        icon: <BarChart3 className="w-4 h-4" />,
+        onClick: () => handleShowStatsModal(file.id, file.name)
+      },
+      {
+        id: 'visibility',
+        label: fileData?.isPublic ? 'Make Private' : 'Make Public',
+        icon: <Share className="w-4 h-4" />,
+        onClick: () => handleToggleVisibility(file.id, !fileData?.isPublic)
+      },
+      {
+        id: 'delete',
+        label: 'Delete',
+        icon: <Trash2 className="w-4 h-4" />,
+        onClick: () => handleDeleteFile(file.id)
+      }
+    ]
   }
 
   const handleShowRenameModal = (folderId: string, folderName: string) => {
@@ -511,13 +616,26 @@ export default function MyFiles() {
               className={
                 viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "space-y-2"
               }
+              onContextMenu={(e) => {
+                // Only prevent default context menu if clicking on empty areas
+                if (e.target === e.currentTarget) {
+                  e.preventDefault()
+                }
+              }}
             >
               {/* Show folders only when not in search mode */}
               {!isSearchMode && folders.map((folder: FolderType) => (
                 <div
                   key={folder.id}
-                  className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 cursor-pointer transition-colors border-2 border-dashed border-transparent hover:border-blue-300 relative group"
+                  className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 active:bg-gray-200 cursor-pointer transition-all duration-200 border-2 border-dashed border-transparent hover:border-blue-300 hover:shadow-md relative group"
+                  onClick={() => handleFolderClick(folder.id)}
                   onDoubleClick={() => handleFolderDoubleClick(folder.id)}
+                  onContextMenu={(e) => handleContextMenu(e, 'folder', { id: folder.id, name: folder.name })}
+                  onTouchEnd={(e) => {
+                    // Handle touch events for mobile/touchpad
+                    e.preventDefault()
+                    handleFolderClick(folder.id)
+                  }}
                   onDragOver={handleFolderDragOver}
                   onDragLeave={handleFolderDragLeave}
                   onDrop={(e) => {
@@ -526,13 +644,22 @@ export default function MyFiles() {
                     const target = e.currentTarget as HTMLElement
                     target.classList.remove('border-blue-500', 'bg-blue-50')
                   }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleFolderClick(folder.id)
+                    }
+                  }}
+                  aria-label={`Open folder ${folder.name}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="text-2xl">📁</div>
                       <div>
                         <h3 className="font-medium text-gray-900">{folder.name}</h3>
-                        <p className="text-xs text-gray-500">Folder</p>
+                        <p className="text-xs text-gray-500">Folder • Click to open • Right-click for options</p>
                       </div>
                     </div>
                     
@@ -565,18 +692,22 @@ export default function MyFiles() {
 
               {/* Render files (either search results or regular files) */}
               {displayFiles.map((file: FileType) => (
-                <FileCard
+                <div
                   key={file.id}
-                  file={file}
-                  onShare={(fileId) => {
-                    handleShowShareModal(fileId, file.filename)
-                  }}
-                  onDelete={handleDeleteFile}
-                  onDownload={() => handleDownloadFile(file.id, file.filename)}
-                  onToggleVisibility={handleToggleVisibility}
-                  onMoveToFolder={handleShowMoveModal}
-                  onShowStats={(fileId) => handleShowStatsModal(fileId, file.filename)}
-                />
+                  onContextMenu={(e) => handleContextMenu(e, 'file', { id: file.id, name: file.filename })}
+                >
+                  <FileCard
+                    file={file}
+                    onShare={(fileId) => {
+                      handleShowShareModal(fileId, file.filename)
+                    }}
+                    onDelete={handleDeleteFile}
+                    onDownload={() => handleDownloadFile(file.id, file.filename)}
+                    onToggleVisibility={handleToggleVisibility}
+                    onMoveToFolder={handleShowMoveModal}
+                    onShowStats={(fileId) => handleShowStatsModal(fileId, file.filename)}
+                  />
+                </div>
               ))}
             </div>
 
@@ -670,6 +801,18 @@ export default function MyFiles() {
           message={confirmModal.confirmData.message}
           onConfirm={confirmModal.confirmData.onConfirm}
           type={confirmModal.confirmData.type}
+        />
+      )}
+
+      {/* Context Menu */}
+      {contextMenu.show && contextMenu.item && (
+        <ContextMenu
+          items={contextMenu.type === 'folder' 
+            ? getFolderContextMenuItems(contextMenu.item)
+            : getFileContextMenuItems(contextMenu.item)
+          }
+          onClose={closeContextMenu}
+          position={contextMenu.position}
         />
       )}
     </div>

@@ -50,7 +50,45 @@ export default function LoginPage() {
       await login(email, password)
       toast.success("Welcome back!")
     } catch (error: unknown) {
-      toast.error((error as Error).message || "Login failed")
+      console.error("Login error:", error)
+      
+      // Extract error message from GraphQL error response
+      let errorMessage = "Login failed. Please check your credentials."
+      
+      const apolloError = error as { message?: string };
+      
+      // Check if error message contains JSON with null data field
+      if (apolloError?.message) {
+        try {
+          const parsedError = JSON.parse(apolloError.message);
+          // If data is null, it means we have a GraphQL error response
+          if (parsedError?.data === null && parsedError?.errors && Array.isArray(parsedError.errors)) {
+            const gqlMessage = parsedError.errors[0]?.message;
+            if (gqlMessage) {
+              if (gqlMessage.toLowerCase().includes('invalid credentials')) {
+                errorMessage = "Invalid email or password. Please try again.";
+              } else if (gqlMessage.toLowerCase().includes('user not found')) {
+                errorMessage = "No account found with this email address.";
+              } else if (gqlMessage.toLowerCase().includes('password')) {
+                errorMessage = "Incorrect password. Please try again.";
+              } else {
+                errorMessage = gqlMessage;
+              }
+            }
+          }
+        } catch {
+          // If parsing fails, fall back to other error handling
+          if (apolloError.message.toLowerCase().includes('invalid credentials')) {
+            errorMessage = "Invalid email or password. Please try again.";
+          } else if (apolloError.message.toLowerCase().includes('network')) {
+            errorMessage = "Network error. Please check your connection.";
+          } else {
+            errorMessage = apolloError.message;
+          }
+        }
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }

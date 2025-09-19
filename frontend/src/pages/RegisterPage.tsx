@@ -66,7 +66,49 @@ export default function RegisterPage() {
       await register(username, email, password, role)
       toast.success("Account created successfully!")
     } catch (error: unknown) {
-      toast.error((error as Error).message || "Registration failed")
+      console.error("Registration error:", error)
+      
+      // Extract error message from GraphQL error response
+      let errorMessage = "Registration failed. Please try again."
+      
+      const apolloError = error as { message?: string };
+      
+      // Check if error message contains JSON with null data field
+      if (apolloError?.message) {
+        try {
+          const parsedError = JSON.parse(apolloError.message);
+          // If data is null, it means we have a GraphQL error response
+          if (parsedError?.data === null && parsedError?.errors && Array.isArray(parsedError.errors)) {
+            const gqlMessage = parsedError.errors[0]?.message;
+            console.log("Parsed GraphQL error message:", gqlMessage);
+            console.log("Full parsed error object:", parsedError);
+            if (gqlMessage) {
+              if (gqlMessage.toLowerCase().includes('email already exists') || gqlMessage.toLowerCase().includes('email already taken')) {
+                errorMessage = "This email address is already registered. Please use a different email or try logging in.";
+              } else if (gqlMessage.toLowerCase().includes('username already exists') || gqlMessage.toLowerCase().includes('username already taken')) {
+                errorMessage = "This username is already taken. Please choose a different username.";
+              } else if (gqlMessage.toLowerCase().includes('password')) {
+                errorMessage = "Password does not meet requirements. Please choose a stronger password.";
+              } else {
+                errorMessage = gqlMessage;
+              }
+            }
+          }
+        } catch {
+          // If parsing fails, fall back to other error handling
+          if (apolloError.message.toLowerCase().includes('email already exists')) {
+            errorMessage = "This email address is already registered.";
+          } else if (apolloError.message.toLowerCase().includes('username already exists')) {
+            errorMessage = "This username is already taken.";
+          } else if (apolloError.message.toLowerCase().includes('network')) {
+            errorMessage = "Network error. Please check your connection.";
+          } else {
+            errorMessage = apolloError.message;
+          }
+        }
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }

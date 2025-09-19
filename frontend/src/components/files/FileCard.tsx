@@ -175,7 +175,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
   return (
     <>
       <div 
-        className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow group cursor-move"
+        className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 hover:shadow-md transition-shadow group cursor-move"
         draggable
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
@@ -183,9 +183,9 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
         onDrop={handleDrop}
         onContextMenu={handleContextMenu}
       >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-start space-x-3 flex-1 min-w-0 pr-2">
-          <div className="text-2xl flex-shrink-0">{getFileIcon(file.filetype)}</div>
+      <div className="flex items-start justify-between mb-2 sm:mb-3">
+        <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0 pr-2">
+          <div className="text-xl sm:text-2xl flex-shrink-0">{getFileIcon(file.filetype)}</div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-medium text-gray-900 break-all leading-tight mb-1 max-w-full" 
                 style={{ wordBreak: 'break-all', overflowWrap: 'anywhere' }}
@@ -213,7 +213,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
               }
               setShowMenu(!showMenu)
             }}
-            className="p-1 rounded-lg hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1.5 sm:p-1 rounded-lg hover:bg-gray-100 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-h-[44px] sm:min-h-auto flex items-center justify-center"
           >
             <MoreVertical className="w-4 h-4 text-gray-500" />
           </button>
@@ -221,12 +221,12 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
           {showMenu && menuPosition && createPortal(
             <div 
               ref={dropdownMenuRef}
-              className="fixed w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+              className="fixed w-64 sm:w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
               style={{ left: menuPosition.x, top: menuPosition.y }}
             >
               <button
                 onClick={() => handleMenuAction("download")}
-                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"
               >
                 <Download className="w-4 h-4" />
                 <span>Download</span>
@@ -234,7 +234,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
 
               <button
                 onClick={() => handleMenuAction("share")}
-                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"
               >
                 <Share2 className="w-4 h-4" />
                 <span>Share</span>
@@ -242,7 +242,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
 
               <button
                 onClick={() => handleMenuAction("move")}
-                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"
               >
                 <Move className="w-4 h-4" />
                 <span>Move to folder</span>
@@ -250,7 +250,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
 
               <button
                 onClick={() => handleMenuAction("toggle-visibility")}
-                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"
               >
                 {file.isPublicShared ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 <span>Make {file.isPublicShared ? "private" : "public"}</span>
@@ -259,7 +259,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
               {file.isPublicShared && (
                 <button
                   onClick={() => handleMenuAction("show-stats")}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                  className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"
                 >
                   <BarChart className="w-4 h-4" />
                   <span>View statistics</span>
@@ -270,7 +270,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
 
               <button
                 onClick={() => handleMenuAction("delete")}
-                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center space-x-2"
+                className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"
               >
                 <Trash2 className="w-4 h-4" />
                 <span>Delete</span>
@@ -282,8 +282,8 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">by {file.owner.username}</span>
-        <div className="flex items-center space-x-1">
+        <span className="text-xs text-gray-500 truncate pr-2">by {file.owner.username}</span>
+        <div className="flex items-center space-x-1 flex-shrink-0">
           {file.isPublicShared ? (
             <Globe className="w-3 h-3 text-green-500" />
           ) : (

@@ -268,7 +268,7 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
+        className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center transition-all duration-200 ${
           storageStats.totalUsed >= STORAGE_LIMIT 
             ? "border-red-300 bg-red-50 cursor-not-allowed opacity-75"
             : isDragOver 
@@ -277,14 +277,14 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
         }`}
       >
         <div className={`transition-all duration-200 ${isDragOver ? 'scale-110' : ''}`}>
-          <Upload className={`w-12 h-12 mx-auto mb-4 transition-colors ${
+          <Upload className={`w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 transition-colors ${
             storageStats.totalUsed >= STORAGE_LIMIT 
               ? 'text-red-400'
               : isDragOver 
                 ? 'text-blue-500' 
                 : 'text-gray-400'
           }`} />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
             {storageStats.totalUsed >= STORAGE_LIMIT 
               ? 'Storage limit reached'
               : isDragOver 
@@ -292,15 +292,15 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
                 : 'Drop files here or click to upload'
             }
           </h3>
-          <p className="text-gray-500 mb-2">
+          <p className="text-sm text-gray-500 mb-2 px-2">
             Support for single and multiple files • Maximum file size: 100MB
           </p>
           {!storageLoading && (
-            <div className="flex items-center justify-center space-x-4 mb-4">
-              <div className="text-xs text-gray-400">
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4 mb-3 sm:mb-4">
+              <div className="text-xs text-gray-400 text-center">
                 Storage: {formatFileSize(storageStats.totalUsed)} / {formatFileSize(STORAGE_LIMIT)} used
               </div>
-              <div className="w-24 bg-gray-200 rounded-full h-2">
+              <div className="w-32 sm:w-24 bg-gray-200 rounded-full h-2">
                 <div 
                   className={`h-2 rounded-full transition-all ${
                     (storageStats.totalUsed / STORAGE_LIMIT) > 0.9 
@@ -312,12 +312,12 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
                   style={{ width: `${Math.min((storageStats.totalUsed / STORAGE_LIMIT) * 100, 100)}%` }}
                 />
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-gray-400 text-center">
                 {formatFileSize(STORAGE_LIMIT - storageStats.totalUsed)} available
               </div>
             </div>
           )}
-          <p className="text-xs text-gray-400 mb-4">
+          <p className="text-xs text-gray-400 mb-3 sm:mb-4 px-2">
             Files will be validated for type consistency to prevent mismatched uploads
           </p>
 
@@ -325,6 +325,7 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
             onClick={() => fileInputRef.current?.click()} 
             variant="outline"
             disabled={storageStats.totalUsed >= STORAGE_LIMIT}
+            className="min-h-[44px]"
           >
             {storageStats.totalUsed >= STORAGE_LIMIT ? 'Storage Full' : 'Choose Files'}
           </Button>
@@ -342,10 +343,10 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
 
       {/* Upload Progress */}
       {uploadFiles.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
             <h4 className="font-medium text-gray-900">Upload Progress</h4>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
               {!storageLoading && (
                 <div className="text-xs text-gray-500">
                   Will use: {formatFileSize(uploadFiles.reduce((total, f) => total + f.file.size, 0))}
@@ -356,6 +357,7 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
                 size="sm"
                 onClick={clearCompleted}
                 disabled={!uploadFiles.some((f) => f.status === "completed")}
+                className="self-start sm:self-auto"
               >
                 Clear Completed
               </Button>
@@ -364,88 +366,93 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
 
           <div className="space-y-3">
             {uploadFiles.map((uploadFile, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-900 truncate">{uploadFile.file.name}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500">{formatFileSize(uploadFile.file.size)}</span>
-                      
-                      {/* Status icons */}
-                      {uploadFile.status === "validating" && (
-                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                      )}
-                      {uploadFile.status === "completed" && <CheckCircle className="w-4 h-4 text-green-500" />}
-                      {uploadFile.status === "error" && <AlertCircle className="w-4 h-4 text-red-500" />}
-                      {uploadFile.status === "validation-warning" && <FileX className="w-4 h-4 text-yellow-500" />}
-                      
-                      {/* Validation result indicator */}
-                      {uploadFile.validationResult && (
-                        <div className="flex items-center space-x-1">
-                          {uploadFile.validationResult.isValid ? (
-                            <div title="File type validated">
-                              <Shield className="w-3 h-3 text-green-500" />
-                            </div>
-                          ) : (
-                            <div title={uploadFile.validationResult.error || "Validation warning"}>
-                              <Shield className="w-3 h-3 text-yellow-500" />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      <button onClick={() => removeFile(index)} className="text-gray-400 hover:text-gray-600">
-                        <X className="w-4 h-4" />
-                      </button>
+              <div key={index} className="flex flex-col space-y-2">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-900 truncate pr-2">{uploadFile.file.name}</span>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        <span className="text-xs text-gray-500">{formatFileSize(uploadFile.file.size)}</span>
+                        
+                        {/* Status icons */}
+                        {uploadFile.status === "validating" && (
+                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        )}
+                        {uploadFile.status === "completed" && <CheckCircle className="w-4 h-4 text-green-500" />}
+                        {uploadFile.status === "error" && <AlertCircle className="w-4 h-4 text-red-500" />}
+                        {uploadFile.status === "validation-warning" && <FileX className="w-4 h-4 text-yellow-500" />}
+                        
+                        {/* Validation result indicator */}
+                        {uploadFile.validationResult && (
+                          <div className="flex items-center">
+                            {uploadFile.validationResult.isValid ? (
+                              <div title="File type validated">
+                                <Shield className="w-3 h-3 text-green-500" />
+                              </div>
+                            ) : (
+                              <div title={uploadFile.validationResult.error || "Validation warning"}>
+                                <Shield className="w-3 h-3 text-yellow-500" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        <button 
+                          onClick={() => removeFile(index)} 
+                          className="text-gray-400 hover:text-gray-600 p-1 min-h-[44px] sm:min-h-auto flex items-center justify-center"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* File type info */}
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-xs text-gray-500">
-                      Declared: {uploadFile.file.type || 'unknown'}
-                    </span>
-                    {uploadFile.validationResult?.detectedType && (
-                      <span className="text-xs text-gray-500">
-                        • Detected: {uploadFile.validationResult.detectedType}
+                    {/* File type info */}
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2 text-xs text-gray-500">
+                      <span>
+                        Declared: {uploadFile.file.type || 'unknown'}
                       </span>
-                    )}
-                  </div>
+                      {uploadFile.validationResult?.detectedType && (
+                        <span>
+                          • Detected: {uploadFile.validationResult.detectedType}
+                        </span>
+                      )}
+                    </div>
 
-                  {/* Progress bar */}
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        uploadFile.status === "completed"
-                          ? "bg-green-500"
-                          : uploadFile.status === "error"
-                            ? "bg-red-500"
-                            : uploadFile.status === "validation-warning"
-                              ? "bg-yellow-500"
-                              : uploadFile.status === "validating"
-                                ? "bg-blue-500 animate-pulse"
-                                : "bg-blue-500"
-                      }`}
-                      style={{ 
-                        width: uploadFile.status === "validating" ? "100%" : `${uploadFile.progress}%` 
-                      }}
-                    />
-                  </div>
+                    {/* Progress bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          uploadFile.status === "completed"
+                            ? "bg-green-500"
+                            : uploadFile.status === "error"
+                              ? "bg-red-500"
+                              : uploadFile.status === "validation-warning"
+                                ? "bg-yellow-500"
+                                : uploadFile.status === "validating"
+                                  ? "bg-blue-500 animate-pulse"
+                                  : "bg-blue-500"
+                        }`}
+                        style={{ 
+                          width: uploadFile.status === "validating" ? "100%" : `${uploadFile.progress}%` 
+                        }}
+                      />
+                    </div>
 
-                  {/* Status text */}
-                  <div className="mt-1">
-                    {uploadFile.status === "validating" && (
-                      <p className="text-xs text-blue-600">Validating file type...</p>
-                    )}
-                    {uploadFile.status === "validation-warning" && uploadFile.validationResult?.error && (
-                      <p className="text-xs text-yellow-600">{uploadFile.validationResult.error}</p>
-                    )}
-                    {uploadFile.error && (
-                      <p className="text-xs text-red-600">{uploadFile.error}</p>
-                    )}
-                    {uploadFile.status === "completed" && (
-                      <p className="text-xs text-green-600">Upload completed successfully</p>
-                    )}
+                    {/* Status text */}
+                    <div className="mt-1">
+                      {uploadFile.status === "validating" && (
+                        <p className="text-xs text-blue-600">Validating file type...</p>
+                      )}
+                      {uploadFile.status === "validation-warning" && uploadFile.validationResult?.error && (
+                        <p className="text-xs text-yellow-600">{uploadFile.validationResult.error}</p>
+                      )}
+                      {uploadFile.error && (
+                        <p className="text-xs text-red-600">{uploadFile.error}</p>
+                      )}
+                      {uploadFile.status === "completed" && (
+                        <p className="text-xs text-green-600">Upload completed successfully</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

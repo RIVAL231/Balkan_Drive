@@ -111,24 +111,169 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear any existing token before login attempt
       localStorage.removeItem("auth_token");
       
-      const { data } = await loginMutation({ variables: { email, password } })
-      localStorage.setItem("auth_token", (data as { login: { token: string; user: User } }).login.token)
-      setUser((data as { login: { token: string; user: User } }).login.user)
+      const { data } = await loginMutation({ 
+        variables: { email, password },
+        errorPolicy: 'none' // Will throw on any GraphQL errors
+      })
+      
+      // Type the expected response structure
+      interface LoginResponse {
+        login: {
+          token: string;
+          user: User;
+        };
+      }
+      
+      const typedData = data as LoginResponse | null;
+      
+      // Check if data exists and has the expected structure
+      if (!typedData || !typedData.login) {
+        // Create a GraphQL-style error response
+        const errorResponse = {
+          errors: [{ message: "Invalid response from server", path: ["login"] }],
+          data: null
+        };
+        throw new Error(JSON.stringify(errorResponse));
+      }
+
+      localStorage.setItem("auth_token", typedData.login.token)
+      setUser(typedData.login.user)
       
       // Clear Apollo cache and refetch queries to ensure fresh state
       await apolloClient.clearStore();
       
-    } catch (error) {
+    } catch (error: unknown) {
       // Make sure to clear any tokens if login fails
       localStorage.removeItem("auth_token");
-      throw error;
+      
+      // Define interfaces for Apollo error structure
+      interface GraphQLError {
+        message: string;
+        path?: string[];
+      }
+      
+      interface ApolloError {
+        graphQLErrors?: GraphQLError[];
+        networkError?: Error | null;
+        message?: string;
+      }
+      
+      const err = error as ApolloError;
+      
+      // Handle Apollo GraphQL errors
+      if (err.graphQLErrors && err.graphQLErrors.length > 0) {
+        const errorResponse = {
+          errors: err.graphQLErrors.map((gqlErr: GraphQLError) => ({
+            message: gqlErr.message,
+            path: gqlErr.path || ["login"]
+          })),
+          data: null
+        };
+        throw new Error(JSON.stringify(errorResponse));
+      }
+      
+      // Handle network errors
+      if (err.networkError) {
+        const errorResponse = {
+          errors: [{ message: "Network error occurred", path: ["login"] }],
+          data: null
+        };
+        throw new Error(JSON.stringify(errorResponse));
+      }
+      
+      // If it's already a structured error, throw as-is
+      if (err.message && err.message.startsWith('{')) {
+        throw error;
+      }
+      
+      // Otherwise, wrap in GraphQL-style error structure
+      const errorResponse = {
+        errors: [{ message: err.message || "Login failed", path: ["login"] }],
+        data: null
+      };
+      throw new Error(JSON.stringify(errorResponse));
     }
   }
 
   const register = async (username: string, email: string, password: string, role: string) => {
-    const { data } = await registerMutation({ variables: { username, email, password, role } })
-    localStorage.setItem("auth_token", (data as { register: { token: string; user: User } }).register.token)
-    setUser((data as { register: { token: string; user: User } }).register.user)
+    try {
+      const { data } = await registerMutation({ 
+        variables: { username, email, password, role },
+        errorPolicy: 'none'
+      })
+      
+      // Type the expected response structure
+      interface RegisterResponse {
+        register: {
+          token: string;
+          user: User;
+        };
+      }
+      
+      const typedData = data as RegisterResponse | null;
+      
+      // Check if data exists and has the expected structure
+      if (!typedData || !typedData.register) {
+        const errorResponse = {
+          errors: [{ message: "Invalid response from server", path: ["register"] }],
+          data: null
+        };
+        throw new Error(JSON.stringify(errorResponse));
+      }
+      
+      localStorage.setItem("auth_token", typedData.register.token)
+      setUser(typedData.register.user)
+    } catch (error: unknown) {
+      // Make sure to clear any tokens if registration fails
+      localStorage.removeItem("auth_token");
+      
+      // Define interfaces for Apollo error structure
+      interface GraphQLError {
+        message: string;
+        path?: string[];
+      }
+      
+      interface ApolloError {
+        graphQLErrors?: GraphQLError[];
+        networkError?: Error | null;
+        message?: string;
+      }
+      
+      const err = error as ApolloError;
+      
+      // Handle Apollo GraphQL errors
+      if (err.graphQLErrors && err.graphQLErrors.length > 0) {
+        const errorResponse = {
+          errors: err.graphQLErrors.map((gqlErr: GraphQLError) => ({
+            message: gqlErr.message,
+            path: gqlErr.path || ["register"]
+          })),
+          data: null
+        };
+        throw new Error(JSON.stringify(errorResponse));
+      }
+      
+      // Handle network errors
+      if (err.networkError) {
+        const errorResponse = {
+          errors: [{ message: "Network error occurred", path: ["register"] }],
+          data: null
+        };
+        throw new Error(JSON.stringify(errorResponse));
+      }
+      
+      // If it's already a structured error, throw as-is
+      if (err.message && err.message.startsWith('{')) {
+        throw error;
+      }
+      
+      // Otherwise, wrap in GraphQL-style error structure
+      const errorResponse = {
+        errors: [{ message: err.message || "Registration failed", path: ["register"] }],
+        data: null
+      };
+      throw new Error(JSON.stringify(errorResponse));
+    }
   }
 
   const logout = () => {

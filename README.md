@@ -1,137 +1,226 @@
 
 # Balkan Drive
 
----
+A secure file storage system with GraphQL API, built with Go backend and React frontend.
 
-## 1) Quick start (Docker)
-From repo root (PowerShell):
+## Quick Start
 
+### Docker (Recommended)
 ```powershell
 git clone https://github.com/RIVAL231/Balkan_Drive.git
 cd Balkan_Drive
 docker-compose up --build
 ```
 
-Services:
-- Backend GraphQL server: http://localhost:8080/query (Playground at `/`)
-- Frontend app: http://localhost:3001
+**Access Points:**
+- **API Documentation**: http://localhost:8080/docs/
+- **GraphQL Playground**: http://localhost:8080/ 
+- **Frontend App**: http://localhost:3001
+- **API Endpoint**: http://localhost:8080/query
 
-Ensure Docker Desktop is running.
+## 📚 Documentation
 
----
+### Complete Documentation Suite
 
-## 2) Local development (no Docker)
+**📖 API Documentation**
+- **Interactive Schema**: http://localhost:8080/docs/ (SpectaQL-generated)
+- **Postman Collection**: [`docs/postman-collection.json`](docs/postman-collection.json)
+- **OpenAPI Specification**: [`docs/openapi.yaml`](docs/openapi.yaml)
 
-Backend
+**🏗️ Architecture & Design**
+- **System Architecture**: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- **Database Schema**: Detailed ER diagrams and relationships (see below)
+- **Design Decisions**: Content-addressed storage, security model, scalability
+
+**💻 Code Documentation**
+- **Backend**: Comprehensive GoDoc comments for all public functions
+- **Frontend**: TypeScript interfaces and JSDoc for complex functions
+- **GraphQL Schema**: [`backend/graph/schema.graphqls`](backend/graph/schema.graphqls)
+
+### Prerequisites
+
+**Required Software:**
+- **Docker & Docker Compose** (recommended)
+- **Go 1.21+** (for local backend development)
+- **Node.js 18+** (for local frontend development)
+- **PostgreSQL 14** (for local database)
+
+
+### Local Development
+**Backend:**
 ```powershell
 cd backend
-# set env vars or copy .env
-go run ./server.go
+go run server.go
 ```
-Configuration is via environment variables (see `backend/internal/config/config.go`):
-- DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
-- PORT, JWT_SECRET
-- AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET
 
-Frontend
+**Frontend:**
 ```powershell
 cd frontend
 npm ci
 npm run dev
 ```
 
-Build frontend for production:
-```powershell
-cd frontend
-npm run build
+**Environment Variables:**
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (PostgreSQL)
+- `PORT`, `JWT_SECRET` (Server config)
+- `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` (Storage)
+
+## API Documentation
+
+**Complete API Reference: http://localhost:8080/docs/**
+
+Interactive documentation includes:
+- All GraphQL mutations and queries with examples
+- Complete type definitions and field descriptions
+- Authentication requirements and user roles
+- Real-time testing capabilities
+
+## Database Schema
+
+**PostgreSQL with content deduplication and hierarchical file organization:**
+
+### Entity Relationship Overview
+```
+users (1) ←→ (N) files
+users (1) ←→ (N) folders
+users (1) ←→ (N) file_shares
+users (1) ←→ (N) file_downloads
+users (1) ←→ (N) audit_logs
+
+content (1) ←→ (N) files (via SHA256 hash)
+folders (1) ←→ (N) folders (self-referencing parent-child)
+folders (1) ←→ (N) files
+files (1) ←→ (N) file_shares
+files (1) ←→ (N) file_downloads
 ```
 
+### Table Definitions
+
+**`users`** - User accounts and authentication
+- `id` (UUID, PK) - Unique user identifier
+- `username` (VARCHAR, UNIQUE) - Login username
+- `email` (VARCHAR, UNIQUE) - User email address
+- `password` (VARCHAR) - Hashed password
+- `role` (ENUM) - User role (admin, user)
+- `storage_quota` (BIGINT) - Storage limit in bytes
+- `created_at` (TIMESTAMP) - Account creation time
+
+**`content`** - Deduplicated blob storage (Content-Addressed Storage)
+- `sha256` (VARCHAR, PK) - File content hash (primary key)
+- `storage_key` (VARCHAR) - S3/storage reference key
+- `size_bytes` (BIGINT) - File size in bytes
+- `ref_count` (INTEGER) - Reference counter for garbage collection
+- `created_at` (TIMESTAMP) - First upload time
+
+**`folders`** - Hierarchical folder structure
+- `id` (UUID, PK) - Unique folder identifier
+- `name` (VARCHAR) - Folder display name
+- `owner_id` (UUID, FK→users.id) - Folder owner
+- `parent_id` (UUID, FK→folders.id, NULLABLE) - Parent folder (NULL = root)
+- `created_at` (TIMESTAMP) - Folder creation time
+
+**`files`** - File metadata and organization
+- `id` (UUID, PK) - Unique file identifier
+- `filename` (VARCHAR) - Original filename
+- `filehash` (VARCHAR, FK→content.sha256) - Content reference
+- `filetype` (VARCHAR) - MIME type
+- `filesize` (BIGINT) - File size (denormalized from content)
+- `is_public` (BOOLEAN) - Public accessibility flag
+- `owner_id` (UUID, FK→users.id) - File owner
+- `folder_id` (UUID, FK→folders.id, NULLABLE) - Parent folder
+- `created_at` (TIMESTAMP) - Upload time
+
+**`file_shares`** - File sharing permissions
+- `id` (UUID, PK) - Unique share identifier
+- `file_id` (UUID, FK→files.id) - Shared file
+- `shared_with` (UUID, FK→users.id) - Target user
+- `shared_by` (UUID, FK→users.id) - Sharing user
+- `permission` (ENUM) - Access level (read, write)
+- `expires_at` (TIMESTAMP, NULLABLE) - Share expiration
+- `created_at` (TIMESTAMP) - Share creation time
+
+**`file_downloads`** - Download analytics and tracking
+- `id` (UUID, PK) - Unique download record
+- `file_id` (UUID, FK→files.id) - Downloaded file
+- `downloaded_by` (UUID, FK→users.id, NULLABLE) - User (NULL = public)
+- `downloaded_at` (TIMESTAMP) - Download timestamp
+- `ip_address` (INET) - Client IP address
+- `user_agent` (TEXT) - Client user agent
+
+**`audit_logs`** - Security and compliance logging
+- `id` (UUID, PK) - Unique log entry
+- `user_id` (UUID, FK→users.id, NULLABLE) - Acting user
+- `action` (VARCHAR) - Action performed (login, upload, delete, etc.)
+- `resource_type` (VARCHAR) - Resource type (file, folder, user)
+- `resource_id` (UUID, NULLABLE) - Resource identifier
+- `resource_name` (VARCHAR, NULLABLE) - Resource name for context
+- `details` (JSONB, NULLABLE) - Additional structured data
+- `ip_address` (INET) - Client IP address
+- `user_agent` (TEXT) - Client user agent
+- `created_at` (TIMESTAMP) - Action timestamp
+
+### Key Design Features
+
+**Content Deduplication**: Files with identical content share the same `content` record, reducing storage costs.
+
+**Hierarchical Folders**: Self-referencing `parent_id` enables unlimited nesting depth.
+
+**Soft References**: `files.filehash` → `content.sha256` with reference counting for safe cleanup.
+
+**Comprehensive Auditing**: All user actions logged with structured details for compliance.
+
+**Performance Indexes**: Optimized for common queries (user files, folder contents, public files).
+
+## Core Features
+
+### Authentication & Security
+- JWT-based authentication
+- Role-based access control (Admin/User)
+- Rate limiting and audit logging
+- Secure file sharing with expiration
+
+### File Management
+- Upload/download with deduplication
+- Folder organization with nesting
+- Public and private file sharing
+- Download analytics and statistics
+
+### API Features
+- GraphQL with real-time queries
+- File upload via multipart forms
+- Search and filtering capabilities
+- Comprehensive audit trails
+
+## Architecture
+
+- **API Layer**: GraphQL server with `gqlgen`
+- **Database**: PostgreSQL with content deduplication
+- **Storage**: S3-compatible blob storage
+- **Frontend**: React with Apollo GraphQL client
+- **Security**: JWT authentication with middleware
+
+## Key Files
+
+### Backend
+- `server.go` - Main server and middleware setup
+- `graph/schema.graphqls` - Complete GraphQL schema
+- `internal/migrations/` - Database schema migrations
+
+### Documentation
+- `public/index.html` - Generated API documentation (SpectaQL)
+
+### Frontend
+- `src/lib/apollo.ts` - GraphQL client configuration
+- `src/components/` - React components
+
+## Tech Stack
+
+**Backend:** Go, GraphQL (gqlgen), PostgreSQL, AWS S3, JWT Authentication  
+**Frontend:** React, TypeScript, Apollo Client, TailwindCSS, Vite  
+**Documentation:** SpectaQL, OpenAPI 3.0, Postman Collections, GoDoc  
+**DevOps:** Docker, Docker Compose, GitHub Actions  
+**Tools:** ESLint, Prettier, golangci-lint
+
 ---
 
-## 3) Database schema (overview)
-The DB is PostgreSQL. Key tables (from `backend/internal/migrations/*.up.sql`):
-
-- `users` (id UUID PK, username, email UNIQUE, password, role, created_at)
-- `content` (sha256 PK, storage_key, size_bytes, ref_count, created_at) — dedup store
-- `folders` (id UUID PK, owner_id FK -> users, name, parent_id FK -> folders, created_at)
-- `files` (id UUID PK, filename, filehash FK -> content(sha256), filetype, filesize, is_public, owner_id FK -> users, folder_id FK -> folders, created_at)
-- `file_shares` (id UUID PK, file_id FK -> files, shared_with FK -> users, shared_by FK -> users, permission, expires_at, created_at)
-- `file_downloads` (id UUID PK, file_id FK -> files, downloaded_by FK -> users, downloaded_at, ip_address, user_agent)
-- `audit_logs` (id UUID PK, user_id FK -> users, action, resource_type, resource_id, resource_name, details JSONB, ip_address INET, user_agent, created_at)
-
-Indexes: users.username, files.owner_id, files.folder_id, files.is_public, file_shares.shared_with, file_downloads.file_id, and several composite indexes for queries and analytics.
-
-ER notes:
-- `content` stores unique file blobs (sha256 primary key). `files.filehash` references `content.sha256`.
-- `folders` support nested parent-child via `parent_id`.
-
----
-
-## 4) API surface
-
-GraphQL (main entry): `POST /query` — schema in `backend/graph/schema.graphqls`.
-
-Highlights (types & operations):
-- Types: `User`, `File`, `Folder`, `Content`, `FileShares`, `PublicFile`, `AuditLog`, `UploadIntent`.
-- Auth: `register`, `login` mutations returning `AuthPayload { token, user }`.
-- File ops: `uploadFile` (multipart Upload), `completeUpload`, `deleteFile`, `changeVisibility`, `moveFile`.
-- Sharing: `shareFile`, `shareFileByUsername`, `unshareFile`, public share mutations.
-- Queries: `me`, `listFiles(folderId)`, `getFile(fileId)`, `searchFiles(...)`, `listPublicFiles`, `getFileDownloadStats(fileId)`.
-
-
-GraphQL SDL is authoritative: see `backend/graph/schema.graphqls` for full types and arguments.
-
----
-
-## 5) Runtime & env
-- Default server port: `PORT` (default 8080)
-- DB connection built from `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
-- Storage: S3-compatible via AWS env vars; local dev may use a mock or local S3.
-
----
-
-## 6) Architecture 
-
-- API layer: GraphQL server implemented with `gqlgen` (backend/graph). It enforces types and resolves to DB and storage actions.
-- DB layer: PostgreSQL. `content` table deduplicates file blobs; `files` references `content`.
-- Storage: S3-compatible for blob storage; metadata in DB.
-- Auth: JWT-based (see `internal/config` and `middleware/auth.go`).
-- Middleware: rate limiter (`internal/middleware/ratelimit.go`), auth middleware (`internal/middleware/auth.go`), and audit logging (`internal/audit`).
-
-Design trade-offs:
-- GraphQL simplifies client queries and aggregated responses (search facets, stats) at cost of resolver complexity.
-- Content-addressed storage reduces duplicate storage but requires careful reference counting (`content.ref_count`).
-
----
-
-## 7) Where to look (important files)
-
-- `backend/server.go` — server bootstrap, middlewares, GraphQL handler
-- `backend/graph/schema.graphqls` — full GraphQL SDL (authoritative API)
-- `backend/graph/resolver.go` — DB connection and resolver structure
-- `backend/internal/migrations` — migration SQL files (schema reference)
-- `backend/internal/config/config.go` — env variables and defaults
-- `frontend/src/lib/apollo.ts` — Apollo client setup
-- `frontend/src` — components and pages
-
-
-
-## 8) Libraries (short list)
-
-Backend
-- `github.com/99designs/gqlgen` (GraphQL)
-- `github.com/jackc/pgx/v5/pgxpool` (Postgres client)
-- `github.com/joho/godotenv` (.env loader)
-- `github.com/vektah/gqlparser/v2` (GraphQL parsing)
-- `golang-migrate/migrate` (migrations)
-
-Frontend
-- `react`, `react-dom`, `vite`
-- `@apollo/client`, `apollo-upload-client`
-- `react-router-dom`, `react-hot-toast`
-- `tailwindcss`, `postcss`
-
----
-
-
-
+All documentation artifacts are located in the [`docs/`](docs/) directory and linked throughout this README.

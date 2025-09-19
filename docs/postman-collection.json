@@ -1,0 +1,520 @@
+{
+  "info": {
+    "name": "Balkan Drive GraphQL API",
+    "description": "Complete GraphQL API collection for Balkan Drive file storage system",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and registration endpoints",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation RegisterUser($input: RegisterInput!) {\n  register(input: $input) {\n    token\n    user {\n      id\n      username\n      email\n      role\n      createdAt\n    }\n  }\n}",
+                "variables": "{\n  \"input\": {\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Register a new user account"
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation LoginUser($input: LoginInput!) {\n  login(input: $input) {\n    token\n    user {\n      id\n      username\n      email\n      role\n      createdAt\n    }\n  }\n}",
+                "variables": "{\n  \"input\": {\n    \"username\": \"testuser\",\n    \"password\": \"password123\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Login with username and password"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.login && response.data.login.token) {",
+                  "        pm.collectionVariables.set('jwt_token', response.data.login.token);",
+                  "        console.log('JWT token saved to collection variable');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "description": "User profile and management operations",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query GetMe {\n  me {\n    id\n    username\n    email\n    role\n    storageQuota\n    usedStorage\n    createdAt\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Get current authenticated user information"
+          }
+        }
+      ]
+    },
+    {
+      "name": "File Operations",
+      "description": "File upload, download, and management operations",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation UploadFile($file: Upload!, $folderId: UUID) {\n  uploadFile(file: $file, folderId: $folderId) {\n    id\n    filename\n    filesize\n    filetype\n    isPublic\n    createdAt\n    owner {\n      username\n    }\n    folder {\n      name\n    }\n  }\n}",
+                "variables": "{\n  \"folderId\": null\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Upload a file to the storage system"
+          }
+        },
+        {
+          "name": "List Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ListFiles($folderId: UUID, $limit: Int, $offset: Int) {\n  listFiles(folderId: $folderId, limit: $limit, offset: $offset) {\n    files {\n      id\n      filename\n      filesize\n      filetype\n      isPublic\n      createdAt\n      owner {\n        username\n      }\n      folder {\n        name\n      }\n    }\n    totalCount\n    hasMore\n  }\n}",
+                "variables": "{\n  \"folderId\": null,\n  \"limit\": 20,\n  \"offset\": 0\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "List files in a specific folder or root directory"
+          }
+        },
+        {
+          "name": "Get File Details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query GetFile($fileId: UUID!) {\n  getFile(fileId: $fileId) {\n    id\n    filename\n    filesize\n    filetype\n    isPublic\n    downloadUrl\n    createdAt\n    owner {\n      username\n    }\n    folder {\n      name\n    }\n  }\n}",
+                "variables": "{\n  \"fileId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Get detailed information about a specific file"
+          }
+        },
+        {
+          "name": "Delete File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation DeleteFile($fileId: UUID!) {\n  deleteFile(fileId: $fileId)\n}",
+                "variables": "{\n  \"fileId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Delete a file from the storage system"
+          }
+        },
+        {
+          "name": "Change File Visibility",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation ChangeFileVisibility($fileId: UUID!, $isPublic: Boolean!) {\n  changeFileVisibility(fileId: $fileId, isPublic: $isPublic) {\n    id\n    filename\n    isPublic\n  }\n}",
+                "variables": "{\n  \"fileId\": \"00000000-0000-0000-0000-000000000000\",\n  \"isPublic\": true\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Change the visibility of a file (public/private)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Folder Operations",
+      "description": "Folder creation and management operations",
+      "item": [
+        {
+          "name": "Create Folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation CreateFolder($input: CreateFolderInput!) {\n  createFolder(input: $input) {\n    id\n    name\n    createdAt\n    owner {\n      username\n    }\n    parent {\n      name\n    }\n  }\n}",
+                "variables": "{\n  \"input\": {\n    \"name\": \"My Documents\",\n    \"parentId\": null\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Create a new folder"
+          }
+        },
+        {
+          "name": "List Folders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ListFolders($parentId: UUID) {\n  listFolders(parentId: $parentId) {\n    id\n    name\n    createdAt\n    owner {\n      username\n    }\n    parent {\n      name\n    }\n  }\n}",
+                "variables": "{\n  \"parentId\": null\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "List folders in a specific parent folder or root"
+          }
+        }
+      ]
+    },
+    {
+      "name": "File Sharing",
+      "description": "File sharing and permission management",
+      "item": [
+        {
+          "name": "Share File with User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation ShareFile($input: ShareFileInput!) {\n  shareFile(input: $input) {\n    id\n    permission\n    expiresAt\n    createdAt\n    file {\n      filename\n    }\n    sharedWith {\n      username\n    }\n    sharedBy {\n      username\n    }\n  }\n}",
+                "variables": "{\n  \"input\": {\n    \"fileId\": \"00000000-0000-0000-0000-000000000000\",\n    \"sharedWithId\": \"00000000-0000-0000-0000-000000000000\",\n    \"permission\": \"READ\",\n    \"expiresAt\": null\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Share a file with another user"
+          }
+        },
+        {
+          "name": "List Shared Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ListSharedFiles {\n  listSharedFiles {\n    id\n    permission\n    expiresAt\n    createdAt\n    file {\n      id\n      filename\n      filesize\n      filetype\n    }\n    sharedBy {\n      username\n    }\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "List files shared with the current user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public Files",
+      "description": "Public file listing and access (no authentication required)",
+      "item": [
+        {
+          "name": "List Public Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ListPublicFiles($limit: Int, $offset: Int) {\n  listPublicFiles(limit: $limit, offset: $offset) {\n    files {\n      id\n      filename\n      filesize\n      filetype\n      downloadUrl\n      createdAt\n      owner {\n        username\n      }\n    }\n    totalCount\n    hasMore\n  }\n}",
+                "variables": "{\n  \"limit\": 20,\n  \"offset\": 0\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "List all publicly accessible files",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search & Statistics",
+      "description": "File search and download statistics",
+      "item": [
+        {
+          "name": "Search Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query SearchFiles($query: String!, $limit: Int, $offset: Int) {\n  searchFiles(query: $query, limit: $limit, offset: $offset) {\n    files {\n      id\n      filename\n      filesize\n      filetype\n      isPublic\n      createdAt\n      owner {\n        username\n      }\n      folder {\n        name\n      }\n    }\n    totalCount\n    hasMore\n  }\n}",
+                "variables": "{\n  \"query\": \"document\",\n  \"limit\": 10,\n  \"offset\": 0\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Search files by filename"
+          }
+        },
+        {
+          "name": "Get File Download Statistics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query GetFileDownloadStats($fileId: UUID!) {\n  getFileDownloadStats(fileId: $fileId) {\n    totalDownloads\n    uniqueDownloaders\n    recentDownloads {\n      id\n      downloadedAt\n      ipAddress\n      userAgent\n      downloadedBy {\n        username\n      }\n    }\n  }\n}",
+                "variables": "{\n  \"fileId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Get download statistics for a specific file"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Operations",
+      "description": "Administrative operations (admin role required)",
+      "item": [
+        {
+          "name": "Get System Statistics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query GetSystemStats {\n  getSystemStats {\n    totalUsers\n    totalFiles\n    totalStorageUsed\n    publicFiles\n    totalDownloads\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "Get system-wide statistics (admin only)"
+          }
+        },
+        {
+          "name": "List Audit Logs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ListAuditLogs($limit: Int, $offset: Int) {\n  listAuditLogs(limit: $limit, offset: $offset) {\n    logs {\n      id\n      action\n      resourceType\n      resourceName\n      details\n      ipAddress\n      userAgent\n      createdAt\n      user {\n        username\n      }\n    }\n    totalCount\n    hasMore\n  }\n}",
+                "variables": "{\n  \"limit\": 20,\n  \"offset\": 0\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["query"]
+            },
+            "description": "List audit logs (admin only)"
+          }
+        }
+      ]
+    }
+  ]
+}

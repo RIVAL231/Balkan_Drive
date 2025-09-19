@@ -1,57 +1,118 @@
 # ==========================
 # Scalars
 # ==========================
+"A date-time string in ISO 8601 format (e.g. 2025-09-19T12:34:56Z)."
 scalar DateTime
+
+"A file upload scalar used by GraphQL multipart requests."
 scalar Upload
 
 # ==========================
 # User
 # ==========================
+"A user of the application. Contains authentication and role information."
 type User {
+  "Unique identifier for the user."
   id: ID!
+
+  "The user's display username (unique)."
   username: String!
+
+  "Email address used for login."
   email: String!
+
+  "Hashed password (bcrypt). This is returned in the schema for internal use - do not expose in public APIs."
   password: String!
+
+  "Role for authorization (e.g., \"user\", \"admin\")."
   role: String!
 }
 
 # Used for login/register response
+"Authentication payload returned after register/login. Contains a JWT token and the authenticated user."
 type AuthPayload {
+  "JWT token used for authenticating subsequent requests."
   token: String!
+
+  "Authenticated user object."
   user: User!
 }
 
+"A folder that can contain files and other folders. Folders are owned by users."
 type Folder {
+  "Unique folder identifier."
   id: ID!
+
+  "Owner of the folder."
   owner: User!
+
+  "Name of the folder."
   name: String!
+
+  "Parent folder (null for root-level folders)."
   parent: Folder
+
+  "Creation timestamp."
   createdAt: DateTime!
 }
 
 # ==========================
 # File
 # ==========================
+"A file uploaded by a user. Files are stored in S3 with deduplication via filehash."
 type File {
+  "Unique file identifier."
   id: ID!
+
+  "Original filename provided by the uploader."
   filename: String!
+
+  "SHA256 hash of the file content used for deduplication."
   filehash: String!
+
+  "Logical filepath or S3 key for the file."
   filepath: String!
+
+  "MIME type of the file (e.g., \"image/png\")."
   filetype: String!
+
+  "Size of the file in bytes."
   filesize: Int!
+
+  "Whether the file is visible to other authenticated users. Deprecated!"
   isPublic: Boolean!
+
+  "Whether the file is shared publicly via a public share link."
   isPublicShared: Boolean!
+
+  "When public sharing was enabled."
   publicShareEnabledAt: DateTime
+
+  "User who enabled the public share."
   publicShareEnabledBy: User
+
+  "Folder containing the file (optional)."
   folder: Folder
+
+  "Creation timestamp."
   createdAt: DateTime!
+
+  "Owner (uploader) of the file."
   owner: User!
 }
 
+"Result container for file search queries including facets for faceted search."
 type SearchResult {
+  "Files matching the search query."
   files: [File!]!
+
+  "Total number of matching files."
   totalCount: Int!
+
+  "Indicates whether more results exist beyond the current page."
   hasMore: Boolean!
+
+  "Facets summarizing results by type/uploader/size buckets."
   facets: SearchFacets!
 }
 
@@ -61,177 +122,386 @@ type SearchFacets {
   sizeBuckets: [SizeBucketFacet!]!
 }
 
+"Facet entry representing a MIME type and its count."
 type MimeTypeFacet {
+  "MIME type (e.g., \"image/png\")."
   type: String!
+
+  "Number of files matching this MIME type."
   count: Int!
+
+  "High-level category (e.g., \"image\", \"video\")."
   category: String!
 }
 
+"Facet entry grouping results by uploader."
 type UploaderFacet {
+  "Uploader's username."
   username: String!
+
+  "Uploader's user id."
   userId: String!
+
+  "Number of files uploaded by this user in the result set."
   count: Int!
 }
 
+"Facet entry grouping files into size buckets for analytics."
 type SizeBucketFacet {
+  "Human-readable range (e.g., \"0-1MB\")."
   range: String!
+
+  "Minimum size in bytes for the bucket."
   min: Int!
+
+  "Optional maximum size in bytes for the bucket."
   max: Int
+
+  "Number of files in this size bucket."
   count: Int!
 }
 
+"Stored content information used for deduplication. Tracks storage object and reference count."
 type Content{
+  "SHA256 of the content used as logical identifier."
   sha256: String!
+
+  "S3 storage key where the content is located."
   storage_key: String!
+
+  "Size of the stored object in bytes."
   size_bytes: Int!
+
+  "Reference count - number of file records referencing this stored object."
   ref_count: Int!
+
+  "When the content entry was created."
   created_at: DateTime!
 }
 
 # Returned when creating upload
+"Returned to the client when initiating an upload. Contains the presigned upload URL and a token used to complete the upload."
 type UploadIntent {
+  "Presigned S3 URL for uploading the file payload."
   uploadUrl: String!
+
+  "Short-lived token used by `completeUpload` to finalize the upload in the database."
   uploadToken: String!
 }
 
 # ==========================
 # Relations (Sharing)
 # ==========================
+"Represents a sharing relationship between an owner and a recipient for a specific file."
 type FileShares{
+  "Unique share record identifier."
   id: ID!
+
+  "File that is shared."
   file: File
+
+  "User the file is shared with."
   sharedWith: User
+
+  "Permission string (e.g., \"read\", \"write\")."
   permission: String!
+
+  "User who created the share." 
   sharedBy: User
+
+  "Optional expiry for the share."
   expiresAt: DateTime
 }
 
 # ==========================
 # Public File Sharing
 # ==========================
+"A public representation of a file that has been shared publicly (public share)."
 type PublicFile {
+  "Unique file identifier."
   id: ID!
+
+  "Filename for display."
   filename: String!
+
+  "MIME type."
   filetype: String!
+
+  "Size in bytes."
   filesize: Int!
+
+  "When the file was uploaded."
   createdAt: DateTime!
+
+  "Owner of the file."
   owner: User!
+
+  "Number of public downloads."
   downloadCount: Int!
+
+  "When the file was made public."
   publicSharedAt: DateTime!
 }
 
+"Record of a single file download event."
 type FileDownload {
+  "Unique download event id."
   id: ID!
+
+  "User who performed the download (nullable for anonymous public downloads)."
   downloadedBy: User
+
+  "Timestamp when the download occurred."
   downloadedAt: DateTime!
+
+  "IP address that performed the download (when available)."
   ipAddress: String
 }
 
+"Aggregated download statistics for a file."
 type FileDownloadStats {
+  "Total number of downloads for the file."
   totalDownloads: Int!
+
+  "List of download events for the file."
   downloads: [FileDownload!]!
 }
 
 # ==========================
 # Statistics
 # ==========================
+"Per-user storage statistics, including deduplication savings."
 type UserStatistics {
+  "Total bytes currently used by the user."
   totalUsed: Int!
+
+  "Sum of original file sizes before deduplication."
   originalSize: Int!
+
+  "Number of bytes saved by deduplication."
   savingsBytes: Int!
+
+  "Percentage saved by deduplication."
   savingsPercentage: Float!
+
+  "Number of files owned by the user."
   fileCount: Int!
+
+  "Count of files the user has shared with others."
   totalSharedFiles: Int!
+
+  "Count of files the user has received from others."
   totalReceivedShares: Int!
 }
 
+"Aggregated statistics for admin dashboards."
 type AdminStatistics {
+  "Total registered users."
   totalUsers: Int!
+
+  "Total files stored in the system."
   totalFiles: Int!
+
+  "Total storage used (bytes)."
   totalStorage: Int!
+
+  "Total bytes saved by deduplication."
   totalSavings: Int!
+
+  "Number of public files."
   totalPublicFiles: Int!
+
+  "Total public downloads across all public files."
   totalPublicDownloads: Int!
+
+  "Top downloaded public files."
   topDownloadedFiles: [PublicFileStats!]!
+
+  "Most recent download events."
   recentDownloads: [FileDownload!]!
 }
 
+"Statistics for a public file used in admin reporting."
 type PublicFileStats {
+  "File id."
   id: ID!
+
+  "Filename."
   filename: String!
+
+  "Number of downloads."
   downloadCount: Int!
+
+  "Owner of the file."
   owner: User!
+
+  "When it was made public."
   publicSharedAt: DateTime!
 }
 
 # ==========================
 # Audit Logs
 # ==========================
+"An audit log entry tracking user and system activities for compliance and debugging."
 type AuditLog {
+  "Unique audit log id."
   id: ID!
+
+  "User who performed the action."
   user: User!
+
+  "Action performed (e.g., \"UPLOAD\", \"DELETE\")."
   action: String!
+
+  "Type of resource affected (e.g., \"file\", \"folder\")."
   resourceType: String!
+
+  "Optional id of the affected resource."
   resourceId: ID
+
+  "Optional human-friendly resource name."
   resourceName: String
+
+  "Additional details about the action in JSON or plaintext."
   details: String
+
+  "IP address where the action originated (if available)."
   ipAddress: String
+
+  "User agent string for the request (if available)."
   userAgent: String
+
+  "When the action was recorded."
   createdAt: DateTime!
 }
 
+"Connection type used for paginated audit log results."
 type AuditLogConnection {
+  "Page of logs."
   logs: [AuditLog!]!
+
+  "Total number of logs matching the filter."
   totalCount: Int!
+
+  "Whether more logs are available after this page."
   hasMore: Boolean!
 }
 
 # ==========================
 # Queries
 # ==========================
+"Root entry point for all read operations."
 type Query {
   # User Management
+  "Get currently authenticated user's profile details and role information."
   me: User!
+
+  "List users visible to the current user. Regular users see only themselves, admins see all users."
   listUsers: [User!]!
+
+  "List all registered users in the system. Admin privileges required."
   listAllUsers: [User!]!
 
   # File Management
-  listFiles(folderId: ID): [File!]!
-  getFile(fileId: ID!): File
-  searchFiles(
-    query: String
-    mimeTypes: [String!]
-    sizeMin: Int
-    sizeMax: Int
-    dateFrom: String
-    dateTo: String
-    uploaderName: String
+  "List files in a specific folder or root directory. Returns files owned by or shared with the current user."
+  listFiles(
+    "Optional folder ID to list files from. If omitted, lists root-level files."
     folderId: ID
+  ): [File!]!
+
+  "Get detailed metadata for a single file by its unique identifier. Returns null if file doesn't exist or user lacks access."
+  getFile(
+    "Unique file identifier to retrieve."
+    fileId: ID!
+  ): File
+
+  "Advanced file search with multiple filters and faceted results for analytics. Supports full-text search, MIME type filtering, size ranges, date ranges, and more."
+  searchFiles(
+    "Text query to search in filenames and metadata."
+    query: String
+    "Filter by specific MIME types (e.g., ['image/png', 'application/pdf'])."
+    mimeTypes: [String!]
+    "Minimum file size in bytes."
+    sizeMin: Int
+    "Maximum file size in bytes."
+    sizeMax: Int
+    "Filter files created after this date (ISO 8601 format)."
+    dateFrom: String
+    "Filter files created before this date (ISO 8601 format)."
+    dateTo: String
+    "Filter by uploader's username."
+    uploaderName: String
+    "Restrict search to a specific folder."
+    folderId: ID
+    "Field to sort by (e.g., 'filename', 'createdAt', 'filesize')."
     sortBy: String
+    "Sort direction ('asc' or 'desc')."
     sortDirection: String
+    "Maximum number of results to return (pagination)."
     limit: Int
+    "Number of results to skip for pagination."
     offset: Int
   ): SearchResult!
+
+  "List files that have been explicitly shared with the current user by other users. Returns share records with permission details."
   listSharedFiles: [FileShares!]!
   
   # Public Files
+  "List all files that have been made publicly accessible via public share links. No authentication required."
   listPublicFiles: [PublicFile!]!
-  getFileDownloadStats(fileId: ID!): FileDownloadStats!
-  getDownloadUrl(fileId: ID!): String!
+
+  "Get comprehensive download statistics for a file including total downloads and individual download events. Requires file ownership or admin privileges."
+  getFileDownloadStats(
+    "File ID to get download statistics for."
+    fileId: ID!
+  ): FileDownloadStats!
+
+  "Generate a secure, time-limited presigned URL for downloading a private file. User must have read access to the file."
+  getDownloadUrl(
+    "File ID to generate download URL for."
+    fileId: ID!
+  ): String!
 
   # Folder management
-  listFolders(parentId: ID): [Folder!]!
+  "List folders owned by the current user, optionally filtered by parent folder. Returns root-level folders if parentId is omitted."
+  listFolders(
+    "Optional parent folder ID to list subfolders from. If omitted, lists root-level folders."
+    parentId: ID
+  ): [Folder!]!
   
   # Statistics
+  "Get comprehensive storage statistics for the current user including total usage, deduplication savings, and sharing metrics."
   getUserStatistics: UserStatistics!
   
   # Admin
+  "Get system-wide statistics for administrative dashboards including total users, storage usage, deduplication savings, and top downloads. Admin privileges required."
   getAdminStatistics: AdminStatistics!
+
+  "Get a complete list of all files in the system across all users. Admin privileges required."
   getAllFiles: [File!]!
   
   # Audit Logs (Admin only)
-  getAuditLogs(limit: Int, offset: Int, userId: ID, action: String, resourceType: String): AuditLogConnection!
-  getUserAuditLogs(limit: Int, offset: Int): AuditLogConnection!
+  "Query system audit logs with filtering options for compliance and debugging. Admin privileges required."
+  getAuditLogs(
+    "Maximum number of log entries to return."
+    limit: Int, 
+    "Number of log entries to skip for pagination."
+    offset: Int, 
+    "Filter by specific user ID."
+    userId: ID, 
+    "Filter by action type (e.g., 'UPLOAD', 'DELETE', 'SHARE')."
+    action: String, 
+    "Filter by resource type (e.g., 'file', 'folder', 'user')."
+    resourceType: String
+  ): AuditLogConnection!
+
+  "Get audit log entries for the current user's actions only. Users can only see their own audit trail."
+  getUserAuditLogs(
+    "Maximum number of log entries to return."
+    limit: Int, 
+    "Number of log entries to skip for pagination."
+    offset: Int
+  ): AuditLogConnection!
 }
 
 
@@ -239,32 +509,152 @@ type Query {
 # ==========================
 # Mutations
 # ==========================
+"Root entry point for all write operations (mutations)."
 type Mutation {
   # Auth
-  register(username: String!, email: String!, password: String!, role: String!): AuthPayload!
-  login(email: String!, password: String!): AuthPayload!
-  changePassword(oldPassword: String!, newPassword: String!): Boolean!
+  "Register a new user account with username, email, and password. Role defaults to 'user' unless admin privileges allow setting custom roles. Returns JWT token and user details."
+  register(
+    "Unique username for the new account."
+    username: String!, 
+    "Email address for login (must be unique)."
+    email: String!, 
+    "Password for the account (will be hashed with bcrypt)."
+    password: String!, 
+    "User role ('user' or 'admin'). Defaults to 'user' for non-admin registrations."
+    role: String!
+  ): AuthPayload!
+
+  "Authenticate a user with email and password. Returns a JWT token for subsequent requests and user details."
+  login(
+    "Registered email address."
+    email: String!, 
+    "User's password."
+    password: String!
+  ): AuthPayload!
+
+  "Change the password for the currently authenticated user. Requires the current password for security."
+  changePassword(
+    "Current password for verification."
+    oldPassword: String!, 
+    "New password to set (will be hashed with bcrypt)."
+    newPassword: String!
+  ): Boolean!
 
 
   # File ops
-  uploadFile(filename: String!, filetype: String!, filePath: String!, filesize: Int!, isPublic: Boolean!, file: Upload!): UploadIntent!
-  completeUpload(uploadToken: String!): File!
-  deleteFile(fileId: ID!): Boolean!
-  changeVisibility(fileId: ID!, isPublic: Boolean!): File!
-  moveFile(fileId: ID!, folderId: ID): File!
-  createFolder(name: String!, parentId: ID): Folder!
-  deleteFolder(folderId: ID!): Boolean!
-  renameFolder(folderId: ID!, newName: String!): Folder!
+  "Initiate a two-phase file upload. Returns a presigned S3 URL for client-side upload and a token to complete the process. Handles deduplication automatically."
+  uploadFile(
+    "Original filename provided by the user."
+    filename: String!, 
+    "MIME type of the file (e.g., 'image/png', 'application/pdf')."
+    filetype: String!, 
+    "Logical file path or S3 key where the file will be stored."
+    filePath: String!, 
+    "Size of the file in bytes."
+    filesize: Int!, 
+    "Whether the file should be publicly accessible (deprecated - use shareFilePublicly instead)."
+    isPublic: Boolean!, 
+    "File upload scalar for multipart form handling."
+    file: Upload!
+  ): UploadIntent!
+
+  "Complete a previously initiated upload using the upload token from uploadFile. Creates the file database record and handles deduplication."
+  completeUpload(
+    "Upload token returned by uploadFile mutation."
+    uploadToken: String!
+  ): File!
+
+  "Delete a file and remove it from storage. Only file owners or admins can delete files. Handles reference counting for deduplication."
+  deleteFile(
+    "Unique identifier of the file to delete."
+    fileId: ID!
+  ): Boolean!
+
+  "Change the visibility status of a file between public and private. Returns the updated file with new visibility settings."
+  changeVisibility(
+    "File ID to change visibility for."
+    fileId: ID!, 
+    "New visibility status (true for public, false for private)."
+    isPublic: Boolean!
+  ): File!
+
+  "Move a file to a different folder or to the root directory. Only file owners can move their files."
+  moveFile(
+    "File ID to move."
+    fileId: ID!, 
+    "Destination folder ID, or null to move to root directory."
+    folderId: ID
+  ): File!
+
+  "Create a new folder with an optional parent folder. Folders help organize files hierarchically."
+  createFolder(
+    "Name for the new folder."
+    name: String!, 
+    "Parent folder ID, or null to create in root directory."
+    parentId: ID
+  ): Folder!
+
+  "Delete a folder. The folder must be empty unless recursive deletion is implemented. Only folder owners can delete folders."
+  deleteFolder(
+    "Folder ID to delete."
+    folderId: ID!
+  ): Boolean!
+
+  "Rename an existing folder. Returns the updated folder with the new name."
+  renameFolder(
+    "Folder ID to rename."
+    folderId: ID!, 
+    "New name for the folder."
+    newName: String!
+  ): Folder!
 
 
   # Sharing
-  shareFile(fileId: ID!, userId: ID!, relationship: String!): FileShares!
-  shareFileByUsername(fileId: ID!, username: String!, permission: String!): FileShares!
-  unshareFile(fileId: ID!, userId: ID!): Boolean!
+  "Share a file with another user by their user ID. Creates a sharing relationship with specific permissions."
+  shareFile(
+    "File ID to share."
+    fileId: ID!, 
+    "User ID of the recipient."
+    userId: ID!, 
+    "Permission level or relationship type (e.g., 'read', 'write')."
+    relationship: String!
+  ): FileShares!
+
+  "Share a file with another user by their username. More convenient than using user ID when username is known."
+  shareFileByUsername(
+    "File ID to share."
+    fileId: ID!, 
+    "Username of the recipient."
+    username: String!, 
+    "Permission level for the share (e.g., 'read', 'write')."
+    permission: String!
+  ): FileShares!
+
+  "Remove a file sharing relationship between the file owner and a specific user. Revokes the user's access to the file."
+  unshareFile(
+    "File ID to unshare."
+    fileId: ID!, 
+    "User ID to revoke access from."
+    userId: ID!
+  ): Boolean!
   
   # Public Sharing
-  shareFilePublicly(fileId: ID!): Boolean!
-  unshareFilePublicly(fileId: ID!): Boolean!
-  downloadPublicFile(fileId: ID!): String!
+  "Make a file publicly accessible via a shareable link. Anyone with the link can download the file without authentication."
+  shareFilePublicly(
+    "File ID to make publicly accessible."
+    fileId: ID!
+  ): Boolean!
+
+  "Remove public access from a file. The file will no longer be downloadable via public links."
+  unshareFilePublicly(
+    "File ID to remove public access from."
+    fileId: ID!
+  ): Boolean!
+
+  "Generate a presigned download URL for a publicly shared file. No authentication required for public files."
+  downloadPublicFile(
+    "File ID of the publicly shared file to download."
+    fileId: ID!
+  ): String!
  
 }

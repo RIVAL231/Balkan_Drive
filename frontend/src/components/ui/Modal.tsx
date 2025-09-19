@@ -23,36 +23,37 @@ const Modal: React.FC<ModalProps> = ({
 
   const sizeClasses = {
     sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
+    md: 'max-w-md sm:max-w-lg',
+    lg: 'max-w-lg sm:max-w-xl lg:max-w-2xl',
+    xl: 'max-w-xl sm:max-w-2xl lg:max-w-4xl',
   }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-end sm:items-center justify-center p-2 sm:p-4">
         <div
           className={cn(
-            'relative bg-white rounded-lg shadow-xl transform transition-all w-full',
+            'relative bg-white rounded-t-lg sm:rounded-lg shadow-xl transform transition-all w-full max-h-[90vh] overflow-y-auto',
             sizeClasses[size]
           )}
           onClick={(e) => e.stopPropagation()}
         >
           {title && (
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b sticky top-0 bg-white z-10">
+              <h3 className="text-lg font-semibold text-gray-900 pr-4">{title}</h3>
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-500 transition-colors"
+                  className="text-gray-400 hover:text-gray-500 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                  aria-label="Close modal"
                 >
                   <X className="h-5 w-5" />
                 </button>
               )}
             </div>
           )}
-          <div className="p-6">{children}</div>
+          <div className="p-4 sm:p-6">{children}</div>
         </div>
       </div>
     </div>
@@ -111,21 +112,21 @@ export const AlertModal: React.FC<AlertModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="sm" showCloseButton={false}>
       <div className="text-center">
-        <div className={cn('mx-auto flex h-12 w-12 items-center justify-center rounded-full mb-4', 
+        <div className={cn('mx-auto flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full mb-3 sm:mb-4', 
           type === 'success' && 'bg-green-100',
           type === 'error' && 'bg-red-100',
           type === 'warning' && 'bg-yellow-100',
           type === 'info' && 'bg-blue-100'
         )}>
-          <Icon className={cn('h-6 w-6', iconColors[type])} />
+          <Icon className={cn('h-5 w-5 sm:h-6 sm:w-6', iconColors[type])} />
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-        <p className="text-sm text-gray-500 mb-6">{message}</p>
-        <div className="flex gap-3 justify-center">
+        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">{title}</h3>
+        <p className="text-sm text-gray-500 mb-4 sm:mb-6">{message}</p>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
           {showCancel && (
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+              className="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors order-2 sm:order-1"
             >
               {cancelText}
             </button>
@@ -133,7 +134,7 @@ export const AlertModal: React.FC<AlertModalProps> = ({
           <button
             onClick={handleConfirm}
             className={cn(
-              'px-4 py-2 text-sm font-medium text-white rounded-md transition-colors',
+              'w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-medium text-white rounded-md transition-colors order-1 sm:order-2',
               type === 'success' && 'bg-green-600 hover:bg-green-700',
               type === 'error' && 'bg-red-600 hover:bg-red-700',
               type === 'warning' && 'bg-yellow-600 hover:bg-yellow-700',

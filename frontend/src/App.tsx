@@ -5,6 +5,8 @@ import { Routes, Route, Navigate } from "react-router-dom"
 import { useAuth } from "./hooks/auth"
 import DashboardLayout from "./components/layout/DashboardLayout"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
+// import MyVoyagerComponent from "./pages/GraphqlVoyager"
+
 // import "./App.css"
 
 // Lazy load page components
@@ -16,6 +18,7 @@ const PublicFiles = lazy(() => import("./pages/PublicFiles"))
 const Statistics = lazy(() => import("./pages/Statistics"))
 const AdminPanel = lazy(() => import("./pages/AdminPanel"))
 const AuditLogsPage = lazy(() => import("./pages/AuditLogsPage"))
+// const GraphQLVoyager = lazy(() => import("./pages/GraphQLVoyager"))
 
 function App() {
   const { user, loading } = useAuth()
@@ -39,6 +42,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* <Route path="/voyager" element={<MyVoyagerComponent />} /> */}
         </Routes>
       </Suspense>
     )
@@ -58,6 +62,7 @@ function App() {
           <Route path="/public" element={<PublicFiles />} />
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/audit" element={<AuditLogsPage />} />
+          
           {user.role === "admin" && <Route path="/admin" element={<AdminPanel />} />}
           <Route path="*" element={<Navigate to="/files" replace />} />
         </Routes>

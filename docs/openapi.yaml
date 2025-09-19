@@ -1,0 +1,483 @@
+openapi: 3.0.3
+info:
+  title: Balkan Drive GraphQL API
+  description: |
+    Complete API specification for the Balkan Drive file storage system.
+    
+    This API provides:
+    - User authentication and management
+    - File upload, download, and organization
+    - Folder creation and hierarchical structure
+    - File sharing with permissions and expiration
+    - Public file access
+    - Search and analytics
+    - Administrative operations and audit logging
+    
+    ## Authentication
+    Most endpoints require JWT authentication. After successful login, include the JWT token in the Authorization header:
+    ```
+    Authorization: Bearer <jwt_token>
+    ```
+    
+    ## GraphQL Endpoint
+    All operations are performed through a single GraphQL endpoint: `/query`
+    
+    ## File Uploads
+    File uploads use GraphQL multipart form data. The server supports:
+    - Maximum file size: 100MB
+    - Maximum memory usage: 50MB
+    - Content deduplication via SHA256 hashing
+    
+  version: 1.0.0
+  contact:
+    name: Balkan Drive API
+    url: http://localhost:8080/docs/
+  license:
+    name: MIT
+    
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /query:
+    post:
+      summary: GraphQL Query Endpoint
+      description: |
+        Main GraphQL endpoint for all operations including queries and mutations.
+        
+        This endpoint handles:
+        - User authentication (register, login)
+        - File operations (upload, download, delete)
+        - Folder management
+        - File sharing and permissions
+        - Search and analytics
+        - Administrative operations
+        
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQLRequest'
+            examples:
+              login:
+                summary: User Login
+                value:
+                  query: |
+                    mutation LoginUser($input: LoginInput!) {
+                      login(input: $input) {
+                        token
+                        user {
+                          id
+                          username
+                          email
+                          role
+                        }
+                      }
+                    }
+                  variables:
+                    input:
+                      username: "testuser"
+                      password: "password123"
+              listFiles:
+                summary: List User Files
+                value:
+                  query: |
+                    query ListFiles($folderId: UUID, $limit: Int) {
+                      listFiles(folderId: $folderId, limit: $limit) {
+                        files {
+                          id
+                          filename
+                          filesize
+                          filetype
+                          isPublic
+                          createdAt
+                        }
+                        totalCount
+                        hasMore
+                      }
+                    }
+                  variables:
+                    folderId: null
+                    limit: 20
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUploadRequest'
+            examples:
+              fileUpload:
+                summary: File Upload
+                value:
+                  operations: |
+                    {
+                      "query": "mutation UploadFile($file: Upload!) { uploadFile(file: $file) { id filename filesize } }",
+                      "variables": { "file": null }
+                    }
+                  map: '{ "0": ["variables.file"] }'
+                  "0": "(binary file data)"
+      responses:
+        '200':
+          description: Successful GraphQL response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLResponse'
+              examples:
+                loginSuccess:
+                  summary: Successful Login
+                  value:
+                    data:
+                      login:
+                        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        user:
+                          id: "123e4567-e89b-12d3-a456-426614174000"
+                          username: "testuser"
+                          email: "test@example.com"
+                          role: "USER"
+                listFilesSuccess:
+                  summary: File List Response
+                  value:
+                    data:
+                      listFiles:
+                        files:
+                          - id: "123e4567-e89b-12d3-a456-426614174001"
+                            filename: "document.pdf"
+                            filesize: 1024000
+                            filetype: "application/pdf"
+                            isPublic: false
+                            createdAt: "2025-01-15T10:30:00Z"
+                        totalCount: 1
+                        hasMore: false
+        '400':
+          description: Bad Request (GraphQL errors)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLError'
+        '401':
+          description: Unauthorized (Invalid or missing JWT token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Payload Too Large (File size exceeds limit)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Requests (Rate limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+        - NoAuth: []
+      tags:
+        - GraphQL
+  
+  /health:
+    get:
+      summary: Health Check
+      description: Returns the health status of the service
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  service:
+                    type: string
+                    example: "balkan-drive-backend"
+      tags:
+        - System
+  
+  /docs/:
+    get:
+      summary: API Documentation
+      description: Interactive GraphQL schema documentation generated by SpectaQL
+      responses:
+        '200':
+          description: HTML documentation page
+          content:
+            text/html:
+              schema:
+                type: string
+      tags:
+        - Documentation
+
+components:
+  schemas:
+    GraphQLRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: GraphQL query or mutation string
+          example: "query { me { id username email } }"
+        variables:
+          type: object
+          description: Variables for the GraphQL operation
+          additionalProperties: true
+        operationName:
+          type: string
+          description: Name of the operation (for multiple operations)
+    
+    FileUploadRequest:
+      type: object
+      properties:
+        operations:
+          type: string
+          description: JSON string containing the GraphQL operation
+        map:
+          type: string
+          description: JSON string mapping file variables
+        "0":
+          type: string
+          format: binary
+          description: File data
+    
+    GraphQLResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          description: The result data from the GraphQL operation
+          additionalProperties: true
+        errors:
+          type: array
+          description: Array of GraphQL errors (if any)
+          items:
+            $ref: '#/components/schemas/GraphQLError'
+        extensions:
+          type: object
+          description: Additional response metadata
+          additionalProperties: true
+    
+    GraphQLError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "Invalid credentials"
+        locations:
+          type: array
+          description: Location of the error in the query
+          items:
+            type: object
+            properties:
+              line:
+                type: integer
+              column:
+                type: integer
+        path:
+          type: array
+          description: Path to the field that caused the error
+          items:
+            oneOf:
+              - type: string
+              - type: integer
+        extensions:
+          type: object
+          description: Additional error information
+          additionalProperties: true
+    
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Unauthorized"
+        code:
+          type: string
+          description: Error code
+          example: "UNAUTHORIZED"
+    
+    # Core Data Types
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+        username:
+          type: string
+          description: User's login name
+        email:
+          type: string
+          format: email
+          description: User's email address
+        role:
+          type: string
+          enum: [USER, ADMIN]
+          description: User's role in the system
+        storageQuota:
+          type: integer
+          format: int64
+          description: Storage quota in bytes
+        usedStorage:
+          type: integer
+          format: int64
+          description: Currently used storage in bytes
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+    
+    File:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique file identifier
+        filename:
+          type: string
+          description: Original filename
+        filesize:
+          type: integer
+          format: int64
+          description: File size in bytes
+        filetype:
+          type: string
+          description: MIME type of the file
+        isPublic:
+          type: boolean
+          description: Whether the file is publicly accessible
+        downloadUrl:
+          type: string
+          format: uri
+          description: Pre-signed download URL
+        createdAt:
+          type: string
+          format: date-time
+          description: Upload timestamp
+        owner:
+          $ref: '#/components/schemas/User'
+        folder:
+          $ref: '#/components/schemas/Folder'
+    
+    Folder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique folder identifier
+        name:
+          type: string
+          description: Folder name
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        owner:
+          $ref: '#/components/schemas/User'
+        parent:
+          $ref: '#/components/schemas/Folder'
+    
+    FileShare:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique share identifier
+        permission:
+          type: string
+          enum: [READ, WRITE]
+          description: Access permission level
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Share expiration time (null = never expires)
+        createdAt:
+          type: string
+          format: date-time
+          description: Share creation timestamp
+        file:
+          $ref: '#/components/schemas/File'
+        sharedWith:
+          $ref: '#/components/schemas/User'
+        sharedBy:
+          $ref: '#/components/schemas/User'
+    
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique log entry identifier
+        action:
+          type: string
+          description: Action performed (e.g., login, upload, delete)
+        resourceType:
+          type: string
+          description: Type of resource affected (e.g., file, folder, user)
+        resourceName:
+          type: string
+          nullable: true
+          description: Name of the affected resource
+        details:
+          type: object
+          nullable: true
+          description: Additional structured details
+          additionalProperties: true
+        ipAddress:
+          type: string
+          description: Client IP address
+        userAgent:
+          type: string
+          description: Client user agent
+        createdAt:
+          type: string
+          format: date-time
+          description: Log entry timestamp
+        user:
+          $ref: '#/components/schemas/User'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from the login mutation.
+        Include the token in the Authorization header: `Bearer <token>`
+    NoAuth:
+      type: apiKey
+      in: header
+      name: X-No-Auth
+      description: Some endpoints (like public file listing) don't require authentication
+
+tags:
+  - name: GraphQL
+    description: Main GraphQL API operations
+  - name: System
+    description: System health and monitoring endpoints
+  - name: Documentation
+    description: API documentation and schema information
+
+externalDocs:
+  description: Interactive GraphQL Schema Documentation
+  url: http://localhost:8080/docs/

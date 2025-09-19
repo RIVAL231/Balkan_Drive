@@ -31,266 +31,482 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	}
 }
 
+// Config holds the configuration for creating a GraphQL executable schema.
+// It contains the parsed GraphQL schema, resolver implementations, directives,
+// and complexity analysis configuration.
 type Config struct {
+	// Schema is the parsed GraphQL schema definition
 	Schema     *ast.Schema
+	// Resolvers contains the implementation of all GraphQL resolvers
 	Resolvers  ResolverRoot
+	// Directives contains custom GraphQL directive implementations
 	Directives DirectiveRoot
+	// Complexity contains query complexity analysis configuration
 	Complexity ComplexityRoot
 }
 
+// ResolverRoot is the root interface that provides access to all GraphQL resolvers.
+// It serves as the entry point for GraphQL query and mutation execution.
 type ResolverRoot interface {
+	// Mutation returns the resolver for GraphQL mutations
 	Mutation() MutationResolver
+	// Query returns the resolver for GraphQL queries
 	Query() QueryResolver
 }
 
+// DirectiveRoot contains implementations for custom GraphQL directives.
+// Currently empty but can be extended to include custom directive handlers.
 type DirectiveRoot struct {
 }
 
+// ComplexityRoot defines query complexity calculation functions for all GraphQL types.
+// It helps prevent expensive queries by analyzing the computational cost of each field.
 type ComplexityRoot struct {
+	// AdminStatistics complexity functions for administrative statistics fields
 	AdminStatistics struct {
+		// RecentDownloads calculates complexity for recent downloads statistics
 		RecentDownloads      func(childComplexity int) int
+		// TopDownloadedFiles calculates complexity for top downloaded files statistics
 		TopDownloadedFiles   func(childComplexity int) int
+		// TotalFiles calculates complexity for total files count
 		TotalFiles           func(childComplexity int) int
+		// TotalPublicDownloads calculates complexity for public downloads count
 		TotalPublicDownloads func(childComplexity int) int
+		// TotalPublicFiles calculates complexity for public files count
 		TotalPublicFiles     func(childComplexity int) int
+		// TotalSavings calculates complexity for storage savings statistics
 		TotalSavings         func(childComplexity int) int
+		// TotalStorage calculates complexity for total storage usage
 		TotalStorage         func(childComplexity int) int
+		// TotalUsers calculates complexity for total users count
 		TotalUsers           func(childComplexity int) int
 	}
 
+	// AuditLog complexity functions for audit log record fields
 	AuditLog struct {
+		// Action calculates complexity for audit action field
 		Action       func(childComplexity int) int
+		// CreatedAt calculates complexity for audit creation timestamp
 		CreatedAt    func(childComplexity int) int
+		// Details calculates complexity for audit details field
 		Details      func(childComplexity int) int
+		// ID calculates complexity for audit log ID
 		ID           func(childComplexity int) int
+		// IPAddress calculates complexity for client IP address
 		IPAddress    func(childComplexity int) int
+		// ResourceID calculates complexity for audited resource ID
 		ResourceID   func(childComplexity int) int
+		// ResourceName calculates complexity for audited resource name
 		ResourceName func(childComplexity int) int
+		// ResourceType calculates complexity for audited resource type
 		ResourceType func(childComplexity int) int
+		// User calculates complexity for associated user
 		User         func(childComplexity int) int
+		// UserAgent calculates complexity for client user agent
 		UserAgent    func(childComplexity int) int
 	}
 
+	// AuditLogConnection complexity functions for paginated audit log results
 	AuditLogConnection struct {
+		// HasMore calculates complexity for pagination indicator
 		HasMore    func(childComplexity int) int
+		// Logs calculates complexity for audit logs list
 		Logs       func(childComplexity int) int
+		// TotalCount calculates complexity for total records count
 		TotalCount func(childComplexity int) int
 	}
 
+	// AuthPayload complexity functions for authentication response fields
 	AuthPayload struct {
+		// Token calculates complexity for authentication token
 		Token func(childComplexity int) int
+		// User calculates complexity for authenticated user data
 		User  func(childComplexity int) int
 	}
 
+	// Content complexity functions for file content metadata fields
 	Content struct {
+		// CreatedAt calculates complexity for content creation timestamp
 		CreatedAt  func(childComplexity int) int
+		// RefCount calculates complexity for reference count
 		RefCount   func(childComplexity int) int
+		// Sha256 calculates complexity for content hash
 		Sha256     func(childComplexity int) int
+		// SizeBytes calculates complexity for content size
 		SizeBytes  func(childComplexity int) int
+		// StorageKey calculates complexity for storage identifier
 		StorageKey func(childComplexity int) int
 	}
 
+	// File complexity functions for file entity fields
 	File struct {
+		// CreatedAt calculates complexity for file creation timestamp
 		CreatedAt            func(childComplexity int) int
+		// Filehash calculates complexity for file hash
 		Filehash             func(childComplexity int) int
+		// Filename calculates complexity for file name
 		Filename             func(childComplexity int) int
+		// Filepath calculates complexity for file path
 		Filepath             func(childComplexity int) int
+		// Filesize calculates complexity for file size
 		Filesize             func(childComplexity int) int
+		// Filetype calculates complexity for file MIME type
 		Filetype             func(childComplexity int) int
+		// Folder calculates complexity for parent folder reference
 		Folder               func(childComplexity int) int
+		// ID calculates complexity for file ID
 		ID                   func(childComplexity int) int
+		// IsPublic calculates complexity for public visibility flag
 		IsPublic             func(childComplexity int) int
+		// IsPublicShared calculates complexity for public sharing status
 		IsPublicShared       func(childComplexity int) int
+		// Owner calculates complexity for file owner reference
 		Owner                func(childComplexity int) int
+		// PublicShareEnabledAt calculates complexity for public sharing timestamp
 		PublicShareEnabledAt func(childComplexity int) int
+		// PublicShareEnabledBy calculates complexity for user who enabled public sharing
 		PublicShareEnabledBy func(childComplexity int) int
 	}
 
+	// FileDownload complexity functions for file download tracking fields
 	FileDownload struct {
+		// DownloadedAt calculates complexity for download timestamp
 		DownloadedAt func(childComplexity int) int
+		// DownloadedBy calculates complexity for user who downloaded
 		DownloadedBy func(childComplexity int) int
+		// ID calculates complexity for download record ID
 		ID           func(childComplexity int) int
+		// IPAddress calculates complexity for downloader's IP address
 		IPAddress    func(childComplexity int) int
 	}
 
+	// FileDownloadStats complexity functions for download statistics fields
 	FileDownloadStats struct {
+		// Downloads calculates complexity for download records list
 		Downloads      func(childComplexity int) int
+		// TotalDownloads calculates complexity for total download count
 		TotalDownloads func(childComplexity int) int
 	}
 
+	// FileShares complexity functions for file sharing record fields
 	FileShares struct {
+		// ExpiresAt calculates complexity for share expiration timestamp
 		ExpiresAt  func(childComplexity int) int
+		// File calculates complexity for shared file reference
 		File       func(childComplexity int) int
+		// ID calculates complexity for file share ID
 		ID         func(childComplexity int) int
+		// Permission calculates complexity for share permission level
 		Permission func(childComplexity int) int
+		// SharedBy calculates complexity for user who shared the file
 		SharedBy   func(childComplexity int) int
+		// SharedWith calculates complexity for user receiving the share
 		SharedWith func(childComplexity int) int
 	}
 
+	// Folder complexity functions for folder entity fields
 	Folder struct {
+		// CreatedAt calculates complexity for folder creation timestamp
 		CreatedAt func(childComplexity int) int
+		// ID calculates complexity for folder ID
 		ID        func(childComplexity int) int
+		// Name calculates complexity for folder name
 		Name      func(childComplexity int) int
+		// Owner calculates complexity for folder owner reference
 		Owner     func(childComplexity int) int
+		// Parent calculates complexity for parent folder reference
 		Parent    func(childComplexity int) int
 	}
 
+	// MimeTypeFacet complexity functions for MIME type faceting fields
 	MimeTypeFacet struct {
+		// Category calculates complexity for MIME type category
 		Category func(childComplexity int) int
+		// Count calculates complexity for MIME type occurrence count
 		Count    func(childComplexity int) int
+		// Type calculates complexity for specific MIME type
 		Type     func(childComplexity int) int
 	}
 
+	// Mutation complexity functions for GraphQL mutation operations
 	Mutation struct {
+		// ChangePassword calculates complexity for password change mutation
 		ChangePassword      func(childComplexity int, oldPassword string, newPassword string) int
+		// ChangeVisibility calculates complexity for file visibility change
 		ChangeVisibility    func(childComplexity int, fileID string, isPublic bool) int
+		// CompleteUpload calculates complexity for upload completion
 		CompleteUpload      func(childComplexity int, uploadToken string) int
+		// CreateFolder calculates complexity for folder creation
 		CreateFolder        func(childComplexity int, name string, parentID *string) int
+		// DeleteFile calculates complexity for file deletion
 		DeleteFile          func(childComplexity int, fileID string) int
+		// DeleteFolder calculates complexity for folder deletion
 		DeleteFolder        func(childComplexity int, folderID string) int
+		// DownloadPublicFile calculates complexity for public file download
 		DownloadPublicFile  func(childComplexity int, fileID string) int
+		// Login calculates complexity for user authentication
 		Login               func(childComplexity int, email string, password string) int
+		// MoveFile calculates complexity for file relocation
 		MoveFile            func(childComplexity int, fileID string, folderID *string) int
+		// Register calculates complexity for user registration
 		Register            func(childComplexity int, username string, email string, password string, role string) int
+		// RenameFolder calculates complexity for folder renaming
 		RenameFolder        func(childComplexity int, folderID string, newName string) int
+		// ShareFile calculates complexity for file sharing by user ID
 		ShareFile           func(childComplexity int, fileID string, userID string, relationship string) int
+		// ShareFileByUsername calculates complexity for file sharing by username
 		ShareFileByUsername func(childComplexity int, fileID string, username string, permission string) int
+		// ShareFilePublicly calculates complexity for public file sharing
 		ShareFilePublicly   func(childComplexity int, fileID string) int
+		// UnshareFile calculates complexity for file unsharing
 		UnshareFile         func(childComplexity int, fileID string, userID string) int
+		// UnshareFilePublicly calculates complexity for removing public access
 		UnshareFilePublicly func(childComplexity int, fileID string) int
+		// UploadFile calculates complexity for file upload initiation
 		UploadFile          func(childComplexity int, filename string, filetype string, filePath string, filesize int32, isPublic bool, file graphql.Upload) int
 	}
 
+	// PublicFile complexity functions for public file entity fields
 	PublicFile struct {
+		// CreatedAt calculates complexity for file creation timestamp
 		CreatedAt      func(childComplexity int) int
+		// DownloadCount calculates complexity for download count
 		DownloadCount  func(childComplexity int) int
+		// Filename calculates complexity for file name
 		Filename       func(childComplexity int) int
+		// Filesize calculates complexity for file size
 		Filesize       func(childComplexity int) int
+		// Filetype calculates complexity for file MIME type
 		Filetype       func(childComplexity int) int
+		// ID calculates complexity for file ID
 		ID             func(childComplexity int) int
+		// Owner calculates complexity for file owner reference
 		Owner          func(childComplexity int) int
+		// PublicSharedAt calculates complexity for public sharing timestamp
 		PublicSharedAt func(childComplexity int) int
 	}
 
+	// PublicFileStats complexity functions for public file statistics fields
 	PublicFileStats struct {
+		// DownloadCount calculates complexity for download statistics
 		DownloadCount  func(childComplexity int) int
+		// Filename calculates complexity for file name in stats
 		Filename       func(childComplexity int) int
+		// ID calculates complexity for file ID in stats
 		ID             func(childComplexity int) int
+		// Owner calculates complexity for file owner in stats
 		Owner          func(childComplexity int) int
+		// PublicSharedAt calculates complexity for sharing timestamp in stats
 		PublicSharedAt func(childComplexity int) int
 	}
 
+	// Query complexity functions for GraphQL query operations
 	Query struct {
+		// GetAdminStatistics calculates complexity for admin statistics query
 		GetAdminStatistics   func(childComplexity int) int
+		// GetAllFiles calculates complexity for all files query (admin)
 		GetAllFiles          func(childComplexity int) int
+		// GetAuditLogs calculates complexity for audit logs query with filters
 		GetAuditLogs         func(childComplexity int, limit *int32, offset *int32, userID *string, action *string, resourceType *string) int
+		// GetDownloadURL calculates complexity for download URL generation
 		GetDownloadURL       func(childComplexity int, fileID string) int
+		// GetFile calculates complexity for single file query
 		GetFile              func(childComplexity int, fileID string) int
+		// GetFileDownloadStats calculates complexity for file download statistics
 		GetFileDownloadStats func(childComplexity int, fileID string) int
+		// GetUserAuditLogs calculates complexity for user-specific audit logs
 		GetUserAuditLogs     func(childComplexity int, limit *int32, offset *int32) int
+		// GetUserStatistics calculates complexity for user statistics query
 		GetUserStatistics    func(childComplexity int) int
+		// ListAllUsers calculates complexity for all users query (admin)
 		ListAllUsers         func(childComplexity int) int
+		// ListFiles calculates complexity for files listing in folder
 		ListFiles            func(childComplexity int, folderID *string) int
+		// ListFolders calculates complexity for folders listing
 		ListFolders          func(childComplexity int, parentID *string) int
+		// ListPublicFiles calculates complexity for public files listing
 		ListPublicFiles      func(childComplexity int) int
+		// ListSharedFiles calculates complexity for shared files listing
 		ListSharedFiles      func(childComplexity int) int
+		// ListUsers calculates complexity for accessible users listing
 		ListUsers            func(childComplexity int) int
+		// Me calculates complexity for current user query
 		Me                   func(childComplexity int) int
+		// SearchFiles calculates complexity for advanced file search
 		SearchFiles          func(childComplexity int, query *string, mimeTypes []string, sizeMin *int32, sizeMax *int32, dateFrom *string, dateTo *string, uploaderName *string, folderID *string, sortBy *string, sortDirection *string, limit *int32, offset *int32) int
 	}
 
+	// SearchFacets complexity functions for search faceting fields
 	SearchFacets struct {
+		// MimeTypes calculates complexity for MIME type facets
 		MimeTypes   func(childComplexity int) int
+		// SizeBuckets calculates complexity for size range facets
 		SizeBuckets func(childComplexity int) int
+		// Uploaders calculates complexity for uploader facets
 		Uploaders   func(childComplexity int) int
 	}
 
+	// SearchResult complexity functions for search result fields
 	SearchResult struct {
+		// Facets calculates complexity for search facets
 		Facets     func(childComplexity int) int
+		// Files calculates complexity for search result files
 		Files      func(childComplexity int) int
+		// HasMore calculates complexity for pagination indicator
 		HasMore    func(childComplexity int) int
+		// TotalCount calculates complexity for total results count
 		TotalCount func(childComplexity int) int
 	}
 
+	// SizeBucketFacet complexity functions for size bucket faceting fields
 	SizeBucketFacet struct {
+		// Count calculates complexity for bucket item count
 		Count func(childComplexity int) int
+		// Max calculates complexity for bucket maximum size
 		Max   func(childComplexity int) int
+		// Min calculates complexity for bucket minimum size
 		Min   func(childComplexity int) int
+		// Range calculates complexity for bucket size range
 		Range func(childComplexity int) int
 	}
 
+	// UploadIntent complexity functions for upload intent fields
 	UploadIntent struct {
+		// UploadToken calculates complexity for upload token
 		UploadToken func(childComplexity int) int
+		// UploadURL calculates complexity for upload URL
 		UploadURL   func(childComplexity int) int
 	}
 
+	// UploaderFacet complexity functions for uploader faceting fields
 	UploaderFacet struct {
+		// Count calculates complexity for uploader file count
 		Count    func(childComplexity int) int
+		// UserID calculates complexity for uploader user ID
 		UserID   func(childComplexity int) int
+		// Username calculates complexity for uploader username
 		Username func(childComplexity int) int
 	}
 
+	// User complexity functions for user entity fields
 	User struct {
+		// Email calculates complexity for user email
 		Email    func(childComplexity int) int
+		// ID calculates complexity for user ID
 		ID       func(childComplexity int) int
+		// Password calculates complexity for user password (sensitive)
 		Password func(childComplexity int) int
+		// Role calculates complexity for user role
 		Role     func(childComplexity int) int
+		// Username calculates complexity for username
 		Username func(childComplexity int) int
 	}
 
+	// UserStatistics complexity functions for user statistics fields
 	UserStatistics struct {
+		// FileCount calculates complexity for user's file count
 		FileCount           func(childComplexity int) int
+		// OriginalSize calculates complexity for original file sizes
 		OriginalSize        func(childComplexity int) int
+		// SavingsBytes calculates complexity for storage savings in bytes
 		SavingsBytes        func(childComplexity int) int
+		// SavingsPercentage calculates complexity for storage savings percentage
 		SavingsPercentage   func(childComplexity int) int
+		// TotalReceivedShares calculates complexity for received shares count
 		TotalReceivedShares func(childComplexity int) int
+		// TotalSharedFiles calculates complexity for shared files count
 		TotalSharedFiles    func(childComplexity int) int
+		// TotalUsed calculates complexity for total storage used
 		TotalUsed           func(childComplexity int) int
 	}
 }
 
+// MutationResolver defines all GraphQL mutation operations for the Balkan Drive file storage system.
+// It handles user authentication, file management, folder operations, and sharing functionality.
 type MutationResolver interface {
+	// Register creates a new user account with the specified credentials and role
 	Register(ctx context.Context, username string, email string, password string, role string) (*model.AuthPayload, error)
+	// Login authenticates a user with email and password, returning an auth token
 	Login(ctx context.Context, email string, password string) (*model.AuthPayload, error)
+	// ChangePassword updates the current user's password after validating the old password
 	ChangePassword(ctx context.Context, oldPassword string, newPassword string) (bool, error)
+	// UploadFile initiates a file upload process and returns upload instructions
 	UploadFile(ctx context.Context, filename string, filetype string, filePath string, filesize int32, isPublic bool, file graphql.Upload) (*model.UploadIntent, error)
+	// CompleteUpload finalizes a file upload using the provided upload token
 	CompleteUpload(ctx context.Context, uploadToken string) (*model.File, error)
+	// DeleteFile permanently removes a file from the system
 	DeleteFile(ctx context.Context, fileID string) (bool, error)
+	// ChangeVisibility updates the public/private visibility status of a file
 	ChangeVisibility(ctx context.Context, fileID string, isPublic bool) (*model.File, error)
+	// MoveFile relocates a file to a different folder
 	MoveFile(ctx context.Context, fileID string, folderID *string) (*model.File, error)
+	// CreateFolder creates a new folder with the specified name and optional parent
 	CreateFolder(ctx context.Context, name string, parentID *string) (*model.Folder, error)
+	// DeleteFolder removes a folder and all its contents from the system
 	DeleteFolder(ctx context.Context, folderID string) (bool, error)
+	// RenameFolder changes the name of an existing folder
 	RenameFolder(ctx context.Context, folderID string, newName string) (*model.Folder, error)
+	// ShareFile grants access to a file for a specific user with defined permissions
 	ShareFile(ctx context.Context, fileID string, userID string, relationship string) (*model.FileShares, error)
+	// ShareFileByUsername shares a file with a user identified by username
 	ShareFileByUsername(ctx context.Context, fileID string, username string, permission string) (*model.FileShares, error)
+	// UnshareFile revokes file access for a specific user
 	UnshareFile(ctx context.Context, fileID string, userID string) (bool, error)
+	// ShareFilePublicly makes a file publicly accessible to all users
 	ShareFilePublicly(ctx context.Context, fileID string) (bool, error)
+	// UnshareFilePublicly removes public access from a file
 	UnshareFilePublicly(ctx context.Context, fileID string) (bool, error)
+	// DownloadPublicFile initiates a download of a publicly shared file
 	DownloadPublicFile(ctx context.Context, fileID string) (string, error)
 }
+// QueryResolver defines all GraphQL query operations for the Balkan Drive file storage system.
+// It provides read-only access to users, files, folders, statistics, and audit logs.
 type QueryResolver interface {
+	// Me returns the current authenticated user's information
 	Me(ctx context.Context) (*model.User, error)
+	// ListUsers returns a list of users accessible to the current user
 	ListUsers(ctx context.Context) ([]*model.User, error)
+	// ListAllUsers returns all users in the system (admin only)
 	ListAllUsers(ctx context.Context) ([]*model.User, error)
+	// ListFiles returns files in a specific folder or root directory
 	ListFiles(ctx context.Context, folderID *string) ([]*model.File, error)
+	// GetFile retrieves detailed information about a specific file
 	GetFile(ctx context.Context, fileID string) (*model.File, error)
+	// SearchFiles performs advanced search across files with multiple filter criteria
 	SearchFiles(ctx context.Context, query *string, mimeTypes []string, sizeMin *int32, sizeMax *int32, dateFrom *string, dateTo *string, uploaderName *string, folderID *string, sortBy *string, sortDirection *string, limit *int32, offset *int32) (*model.SearchResult, error)
+	// ListSharedFiles returns files that have been shared with the current user
 	ListSharedFiles(ctx context.Context) ([]*model.FileShares, error)
+	// ListPublicFiles returns all publicly accessible files
 	ListPublicFiles(ctx context.Context) ([]*model.PublicFile, error)
+	// GetFileDownloadStats returns download statistics for a specific file
 	GetFileDownloadStats(ctx context.Context, fileID string) (*model.FileDownloadStats, error)
+	// GetDownloadURL generates a secure download URL for a file
 	GetDownloadURL(ctx context.Context, fileID string) (string, error)
+	// ListFolders returns folders within a parent folder or root directory
 	ListFolders(ctx context.Context, parentID *string) ([]*model.Folder, error)
+	// GetUserStatistics returns storage and usage statistics for the current user
 	GetUserStatistics(ctx context.Context) (*model.UserStatistics, error)
+	// GetAdminStatistics returns system-wide statistics and metrics (admin only)
 	GetAdminStatistics(ctx context.Context) (*model.AdminStatistics, error)
+	// GetAllFiles returns all files in the system (admin only)
 	GetAllFiles(ctx context.Context) ([]*model.File, error)
+	// GetAuditLogs returns system audit logs with optional filtering (admin only)
 	GetAuditLogs(ctx context.Context, limit *int32, offset *int32, userID *string, action *string, resourceType *string) (*model.AuditLogConnection, error)
+	// GetUserAuditLogs returns audit logs for the current user's activities
 	GetUserAuditLogs(ctx context.Context, limit *int32, offset *int32) (*model.AuditLogConnection, error)
 }
 
+// executableSchema implements the GraphQL executable schema interface.
+// It combines the parsed schema, resolvers, directives, and complexity analysis
+// to provide a complete GraphQL execution environment.
 type executableSchema struct {
+	// schema holds the parsed GraphQL schema definition
 	schema     *ast.Schema
+	// resolvers contains the resolver implementations
 	resolvers  ResolverRoot
+	// directives contains custom directive implementations
 	directives DirectiveRoot
+	// complexity contains query complexity analysis configuration
 	complexity ComplexityRoot
 }
 
@@ -1325,11 +1541,17 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	}
 }
 
+// executionContext holds the runtime context for GraphQL query execution.
+// It manages deferred execution, operation context, and schema references
+// during the processing of GraphQL requests.
 type executionContext struct {
 	*graphql.OperationContext
 	*executableSchema
+	// deferred tracks the number of deferred field executions
 	deferred        int32
+	// pendingDeferred counts fields awaiting deferred execution
 	pendingDeferred int32
+	// deferredResults is a channel for collecting deferred execution results
 	deferredResults chan graphql.DeferredResult
 }
 
@@ -1366,9 +1588,13 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
+// sourcesFS embeds the GraphQL schema files into the binary.
+// This allows the schema to be available at runtime without external file dependencies.
 //go:embed "schema.graphqls"
 var sourcesFS embed.FS
 
+// sourceData reads and returns the content of an embedded schema file.
+// It panics if the file is not available, indicating a code generation problem.
 func sourceData(filename string) string {
 	data, err := sourcesFS.ReadFile(filename)
 	if err != nil {
@@ -1377,9 +1603,13 @@ func sourceData(filename string) string {
 	return string(data)
 }
 
+// sources contains the GraphQL schema source definitions used for parsing.
+// It includes the main schema file and any additional schema components.
 var sources = []*ast.Source{
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
 }
+// parsedSchema is the pre-parsed GraphQL schema loaded from source files.
+// It provides the complete schema definition used for query validation and execution.
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // endregion ************************** generated!.gotpl **************************
