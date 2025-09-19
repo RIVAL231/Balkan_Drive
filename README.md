@@ -2,11 +2,20 @@
 
 
 ## RUN LOCALLY DOCKER COMPOSE
+
+Clone the Repository:
+```powershell
+git clone https://github.com/RIVAL231/Balkan_Drive.git
+```
+
 From repo root:
 
 ```powershell
 docker-compose up --build
 ```
+The server will start on localhost:8080 and access the frontend at localhost:3001
+
+Note: You shoukd have Docker Desktop running locally.
 
 This builds and starts both backend and frontend services using `docker-compose.yml` at the repository root.
 
