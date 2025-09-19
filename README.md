@@ -9,7 +9,7 @@ A secure file storage system with GraphQL API, built with Go backend and React f
 ```powershell
 git clone https://github.com/RIVAL231/Balkan_Drive.git
 cd Balkan_Drive
-docker-compose up --build
+docker compose up
 ```
 
 **Access Points:**
