@@ -3,6 +3,8 @@
 
 A secure file storage system with GraphQL API, built with Go backend and React frontend.
 
+Access the deployed application at: [https://balkandrive.sankalpsharma.me](https://balkandrive.sankalpsharma.me)
+
 ## Quick Start
 
 ### Docker (Recommended)
