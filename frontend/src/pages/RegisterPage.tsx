@@ -9,6 +9,31 @@ import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import toast from "react-hot-toast"
 
+/**
+ * RegisterPage component for new user account creation
+ * 
+ * Features:
+ * - Complete user registration form with validation
+ * - Username, email, password, and role selection
+ * - Real-time form validation with error messages
+ * - Password confirmation matching
+ * - Role selection (user/admin) with appropriate UI
+ * - Loading states during registration process
+ * - Integration with auth context for account creation
+ * - Error handling with user feedback
+ * - Link to login page for existing users
+ * - Responsive design with mobile optimization
+ * 
+ * @example
+ * ```tsx
+ * // Used as a route component
+ * <Route path="/register" component={RegisterPage} />
+ * 
+ * // Automatic redirect after successful registration
+ * // happens via auth context
+ * ```
+ */
+
 export default function RegisterPage() {
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")

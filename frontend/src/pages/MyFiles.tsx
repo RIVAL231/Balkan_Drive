@@ -20,23 +20,62 @@ import FileDownloadStatsModal from "@/components/files/FileDownloadStatsModal"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 import ContextMenu from "@/components/ui/ContextMenu"
 
+/**
+ * Interface for file data structure used in the MyFiles component
+ */
 interface FileType {
+  /** Unique file identifier */
   id: string
+  /** Original filename with extension */
   filename: string
+  /** MIME type of the file */
   filetype: string
+  /** File size in bytes */
   filesize: number
+  /** Whether file is publicly accessible */
   isPublic: boolean
+  /** Whether file has public sharing enabled */
   isPublicShared: boolean
+  /** Timestamp when public sharing was enabled */
   publicShareEnabledAt?: string
+  /** User who enabled public sharing */
   publicShareEnabledBy?: {
     id: string
     username: string
   }
+  /** File creation timestamp */
   createdAt: string
+  /** File owner information */
   owner: {
     username: string
   }
 }
+
+/**
+ * MyFiles page component - Main file management interface
+ * 
+ * Features:
+ * - File and folder browsing with breadcrumb navigation
+ * - Grid and list view modes for file display
+ * - File upload with drag-and-drop support
+ * - Folder creation and management
+ * - File operations (download, share, delete, move, rename)
+ * - Search functionality across files and folders
+ * - Public sharing and visibility controls
+ * - File download statistics
+ * - Context menus and keyboard shortcuts
+ * - Responsive design with mobile support
+ * - Real-time updates and error handling
+ * 
+ * @example
+ * ```tsx
+ * // Used as a route component
+ * <Route path="/files" component={MyFiles} />
+ * 
+ * // Can also be embedded in other components
+ * <MyFiles />
+ * ```
+ */
 
 interface FolderType {
   id: string
@@ -530,7 +569,7 @@ export default function MyFiles() {
             variant="outline"
             size="sm"
             className="flex items-center space-x-2 bg-transparent"
-            onClick={() => setShowUpload(true)}
+            onClick={() => setShowUpload((prev) => !prev)}
           >
             <Upload className="w-4 h-4" />
             <span>Upload File</span>

@@ -1,11 +1,42 @@
 import { type InputHTMLAttributes, forwardRef } from "react"
 import { cn } from "@/lib/utils"
 
+/**
+ * Props for the Input component
+ * @extends InputHTMLAttributes<HTMLInputElement>
+ */
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  /** Optional label text to display above the input */
   label?: string
+  /** Error message to display below the input */
   error?: string
 }
 
+/**
+ * Reusable Input component with label and error state support
+ * 
+ * Features:
+ * - Optional label with proper accessibility
+ * - Error state styling and message display
+ * - Mobile-optimized touch targets
+ * - Responsive design (larger on mobile to prevent zoom)
+ * - Full form integration support
+ * 
+ * @example
+ * ```tsx
+ * <Input 
+ *   label="Email Address"
+ *   type="email"
+ *   error={errors.email}
+ *   {...register("email")}
+ * />
+ * 
+ * <Input 
+ *   placeholder="Search files..."
+ *   onChange={handleSearch}
+ * />
+ * ```
+ */
 const Input = forwardRef<HTMLInputElement, InputProps>(({ className, label, error, ...props }, ref) => {
   return (
     <div className="space-y-1 sm:space-y-2">

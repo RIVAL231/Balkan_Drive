@@ -9,13 +9,44 @@ import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import toast from "react-hot-toast"
 
+/**
+ * Props for the CreateFolderModal component
+ */
 interface CreateFolderModalProps {
+  /** Whether the modal is currently open/visible */
   isOpen: boolean
+  /** Callback function called when modal should be closed */
   onClose: () => void
+  /** Callback function called when folder creation succeeds */
   onSuccess: () => void
+  /** Optional parent folder ID where new folder will be created */
   parentId?: string
 }
 
+/**
+ * CreateFolderModal component for creating new folders
+ * 
+ * Features:
+ * - Simple form with folder name input
+ * - Validation to ensure folder name is provided
+ * - Loading states during folder creation
+ * - Error handling with user feedback
+ * - Integration with folder hierarchy (parent/child relationships)
+ * - Responsive modal design
+ * 
+ * @example
+ * ```tsx
+ * <CreateFolderModal
+ *   isOpen={showCreateModal}
+ *   onClose={() => setShowCreateModal(false)}
+ *   onSuccess={() => {
+ *     setShowCreateModal(false)
+ *     refetchFolders()
+ *   }}
+ *   parentId={currentFolderId}
+ * />
+ * ```
+ */
 export default function CreateFolderModal({ isOpen, onClose, onSuccess, parentId }: CreateFolderModalProps) {
   const [folderName, setFolderName] = useState("")
   const [loading, setLoading] = useState(false)

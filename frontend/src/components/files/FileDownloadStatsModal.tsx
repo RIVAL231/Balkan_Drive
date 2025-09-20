@@ -2,13 +2,42 @@ import { X, Download, User, Calendar, Globe } from "lucide-react"
 import { useFileDownloadStats } from "@/hooks/usePublicFiles"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 
+/**
+ * Props for the FileDownloadStatsModal component
+ */
 interface FileDownloadStatsModalProps {
+  /** Whether the modal is currently open/visible */
   isOpen: boolean
+  /** Callback function called when modal should be closed */
   onClose: () => void
+  /** ID of the file to show download statistics for */
   fileId: string
+  /** Display name of the file */
   fileName: string
 }
 
+/**
+ * FileDownloadStatsModal component for displaying file download analytics
+ * 
+ * Features:
+ * - Comprehensive download statistics and metrics
+ * - Download activity timeline with user information
+ * - Unique downloader count and geographic data
+ * - Loading states and error handling
+ * - Responsive table design for mobile devices
+ * - Date/time formatting for download timestamps
+ * - Anonymous download tracking
+ * 
+ * @example
+ * ```tsx
+ * <FileDownloadStatsModal
+ *   isOpen={showStatsModal}
+ *   onClose={() => setShowStatsModal(false)}
+ *   fileId={selectedFile.id}
+ *   fileName={selectedFile.filename}
+ * />
+ * ```
+ */
 export default function FileDownloadStatsModal({
   isOpen,
   onClose,

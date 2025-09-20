@@ -10,27 +10,72 @@ import { formatFileSize, validateFileMimeType, validateMultipleFilesStorage, STO
 import Button from "@/components/ui/Button"
 import toast from "react-hot-toast"
 
+/**
+ * Interface for tracking individual file upload state
+ */
 interface UploadFile {
+  /** The File object being uploaded */
   file: File
+  /** Upload progress percentage (0-100) */
   progress: number
+  /** Current upload status */
   status: "pending" | "validating" | "uploading" | "completed" | "error" | "validation-warning"
+  /** Error message if upload failed */
   error?: string
+  /** File validation result from MIME type checking */
   validationResult?: {
     isValid: boolean
     detectedType?: string
     error?: string
   }
 }
+
+/**
+ * Interface for upload response from server
+ */
 interface UploadResponse {
+  /** Token to complete the upload after S3 upload */
   uploadToken: string
 }
+
+/**
+ * Props for the UploadZone component
+ */
 interface UploadZoneProps {
+  /** Callback fired when upload completes successfully */
   onUploadComplete?: () => void
 }
 
+/**
+ * UploadZone component for file upload with drag-and-drop support
+ * 
+ * Features:
+ * - Drag and drop file upload interface
+ * - Multi-file upload support with progress tracking
+ * - File validation including MIME type verification
+ * - Storage quota checking before upload
+ * - Visual upload progress indicators
+ * - Error handling and user feedback
+ * - Responsive design with mobile support
+ * - Security validation to prevent malicious files
+ * 
+ * @example
+ * ```tsx
+ * <UploadZone onUploadComplete={() => refetchFiles()} />
+ * 
+ * // With custom handling
+ * <UploadZone 
+ *   onUploadComplete={() => {
+ *     refetchFiles()
+ *     toast.success('Files uploaded successfully!')
+ *   }}
+ * />
+ * ```
+ */
 export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
+  // const [close, setClose] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { uploadFile: uploadFileMutation, completeUpload } = useFileOperations()
   const { stats: storageStats, loading: storageLoading } = useStorageStats()
@@ -263,6 +308,7 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
 
   return (
     <div className="space-y-4">
+    
       {/* Upload Zone */}
       <div
         onDragOver={handleDragOver}

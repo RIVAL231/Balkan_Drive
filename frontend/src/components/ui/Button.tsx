@@ -2,12 +2,40 @@ import { type ButtonHTMLAttributes, forwardRef } from "react"
 import { cn } from "@/lib/utils"
 import LoadingSpinner from "./LoadingSpinner"
 
+/**
+ * Props for the Button component
+ * @extends ButtonHTMLAttributes<HTMLButtonElement>
+ */
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Visual style variant for the button */
   variant?: "primary" | "secondary" | "outline" | "ghost"
+  /** Size variant for the button */
   size?: "sm" | "md" | "lg"
+  /** Whether to show loading spinner and disable interaction */
   loading?: boolean
 }
 
+/**
+ * Reusable Button component with multiple variants and loading state support
+ * 
+ * Features:
+ * - Multiple visual variants (primary, secondary, outline, ghost)
+ * - Responsive sizing (sm, md, lg)
+ * - Loading state with spinner
+ * - Full accessibility support
+ * - Touch-friendly on mobile devices
+ * 
+ * @example
+ * ```tsx
+ * <Button variant="primary" size="md" loading={isSubmitting}>
+ *   Submit Form
+ * </Button>
+ * 
+ * <Button variant="outline" onClick={handleCancel}>
+ *   Cancel
+ * </Button>
+ * ```
+ */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", loading, children, disabled, ...props }, ref) => {
     const baseClasses =

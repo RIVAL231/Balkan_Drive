@@ -9,6 +9,28 @@ import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import toast from "react-hot-toast"
 
+/**
+ * LoginPage component for user authentication
+ * 
+ * Features:
+ * - Email and password authentication form
+ * - Real-time form validation with error messages
+ * - Loading states during authentication
+ * - Integration with auth context for login
+ * - Error handling with user feedback via toast notifications
+ * - Link to registration page for new users
+ * - Responsive design with mobile-first approach
+ * - Accessibility features with proper form labels
+ * 
+ * @example
+ * ```tsx
+ * // Used as a route component
+ * <Route path="/login" component={LoginPage} />
+ * 
+ * // Programmatic navigation after successful login
+ * // happens automatically via auth context
+ * ```
+ */
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   // const [role, setRole] = useState("user")

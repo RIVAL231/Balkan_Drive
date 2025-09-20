@@ -7,6 +7,33 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner"
 import AuditLogs from "@/components/audit/AuditLogs"
 import { useState } from "react"
 
+/**
+ * AdminPanel page component for system administration and monitoring
+ * 
+ * Features:
+ * - System-wide statistics dashboard with key metrics
+ * - User management with expandable user list
+ * - File management with detailed file information
+ * - Storage analytics and deduplication savings
+ * - Public sharing and download statistics
+ * - Top downloaded files tracking
+ * - Recent download activity monitoring
+ * - Integrated audit logs for security monitoring
+ * - Responsive grid layout for different screen sizes
+ * - Admin-only access with role-based security
+ * 
+ * @example
+ * ```tsx
+ * // Used as a route component (admin role required)
+ * <Route path="/admin" component={AdminPanel} />
+ * 
+ * // Displays comprehensive system overview including:
+ * // - Total users, files, storage usage
+ * // - Public sharing statistics
+ * // - Top downloaded content
+ * // - Recent activity logs
+ * ```
+ */
 export default function AdminPanel() {
   const [expandedUsers, setExpandedUsers] = useState(false)
   const [expandedFiles, setExpandedFiles] = useState(false)

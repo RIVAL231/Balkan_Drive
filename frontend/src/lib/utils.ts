@@ -2,10 +2,27 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { formatDistanceToNow } from "date-fns"
 
+/**
+ * Combines and merges Tailwind CSS classes using clsx and tailwind-merge
+ * @param inputs - Class values to combine (strings, objects, arrays, etc.)
+ * @returns Merged and deduplicated class string
+ * @example
+ * cn('px-4', 'py-2', { 'bg-blue': true, 'text-white': false })
+ * // Returns: 'px-4 py-2 bg-blue'
+ */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Formats a byte count into a human-readable file size string
+ * @param bytes - The number of bytes to format
+ * @returns Formatted file size string (e.g., "1.5 MB", "256 KB")
+ * @example
+ * formatFileSize(1024) // "1 KB"
+ * formatFileSize(1536) // "1.5 KB" 
+ * formatFileSize(0) // "0 Bytes"
+ */
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes"
 
@@ -16,10 +33,26 @@ export function formatFileSize(bytes: number): string {
   return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
 }
 
+/**
+ * Formats a date string into a relative time description
+ * @param date - ISO date string to format
+ * @returns Human-readable relative time (e.g., "2 hours ago", "3 days ago")
+ * @example
+ * formatRelativeTime('2023-01-01T10:00:00Z') // "3 days ago"
+ */
 export function formatRelativeTime(date: string): string {
   return formatDistanceToNow(new Date(date), { addSuffix: true })
 }
 
+/**
+ * Returns an appropriate emoji icon for a given file MIME type
+ * @param filetype - MIME type string (e.g., "image/png", "application/pdf")
+ * @returns Emoji character representing the file type
+ * @example
+ * getFileIcon('image/png') // "🖼️"
+ * getFileIcon('application/pdf') // "📄"
+ * getFileIcon('video/mp4') // "📹"
+ */
 export function getFileIcon(filetype: string): string {
   if (filetype.startsWith("image/")) return "🖼️"
   if (filetype.startsWith("video/")) return "📹"
@@ -32,12 +65,30 @@ export function getFileIcon(filetype: string): string {
   return "📄"
 }
 
-// MIME type validation utility
-export async function validateFileMimeType(file: File): Promise<{ 
-  isValid: boolean; 
-  detectedType?: string; 
-  error?: string 
-}> {
+/**
+ * Validation result for MIME type checking
+ */
+interface MimeValidationResult {
+  /** Whether the file type validation passed */
+  isValid: boolean
+  /** The detected MIME type from file content analysis */
+  detectedType?: string
+  /** Error message if validation failed */
+  error?: string
+}
+
+/**
+ * Validates a file's MIME type by analyzing its binary content
+ * Compares the declared MIME type with the detected type from file headers
+ * @param file - File object to validate
+ * @returns Promise resolving to validation result with detected type and any errors
+ * @example
+ * const result = await validateFileMimeType(file)
+ * if (!result.isValid) {
+ *   console.warn('File type mismatch:', result.error)
+ * }
+ */
+export async function validateFileMimeType(file: File): Promise<MimeValidationResult> {
   try {
     // Read the first few bytes of the file to check magic numbers
     const arrayBuffer = await file.slice(0, 4096).arrayBuffer()
@@ -71,6 +122,12 @@ export async function validateFileMimeType(file: File): Promise<{
   }
 }
 
+/**
+ * Detects MIME type from file content by analyzing magic numbers and file signatures
+ * @param bytes - Uint8Array of file content to analyze
+ * @returns Detected MIME type string or null if type cannot be determined
+ * @internal
+ */
 function detectMimeTypeFromBytes(bytes: Uint8Array): string | null {
   // Check magic numbers for common file types
   const signatures: { [key: string]: number[][] } = {
@@ -134,6 +191,12 @@ function detectMimeTypeFromBytes(bytes: Uint8Array): string | null {
   return null
 }
 
+/**
+ * Determines if a file appears to be text-based by analyzing byte patterns
+ * @param bytes - Uint8Array of file content to analyze  
+ * @returns True if file appears to contain text content
+ * @internal
+ */
 function isTextFile(bytes: Uint8Array): boolean {
   // Check if the file appears to be text by looking for non-printable characters
   const sample = bytes.slice(0, 1024)
@@ -151,6 +214,14 @@ function isTextFile(bytes: Uint8Array): boolean {
   return (textBytes / sample.length) > 0.95
 }
 
+/**
+ * Checks if detected MIME type matches the declared MIME type
+ * Allows for category matching (e.g., image/* matches image/jpeg)
+ * @param declared - The declared MIME type from file metadata
+ * @param detected - The detected MIME type from file content analysis
+ * @returns True if the types are considered a match
+ * @internal
+ */
 function isMimeTypeMatch(declared: string, detected: string): boolean {
   if (!declared || !detected) return false
   
@@ -179,9 +250,14 @@ function isMimeTypeMatch(declared: string, detected: string): boolean {
   return false
 }
 
-// Storage quota validation utilities
+/**
+ * Default storage limit for user uploads (10MB in bytes)
+ */
 export const STORAGE_LIMIT = 10 * 1024 * 1024 // 10MB in bytes
 
+/**
+ * Result of storage quota validation
+ */
 export interface StorageValidationResult {
   canUpload: boolean
   availableSpace: number
@@ -191,6 +267,20 @@ export interface StorageValidationResult {
   warningThreshold?: boolean
 }
 
+/**
+ * Validates if a file upload would exceed storage quota limits
+ * @param currentUsage - Current storage usage in bytes
+ * @param fileSize - Size of file to upload in bytes
+ * @param storageLimit - Maximum storage limit in bytes (defaults to STORAGE_LIMIT)
+ * @returns Validation result with upload permission and available space info
+ * @example
+ * const result = validateStorageQuota(5000000, 2000000, 10000000)
+ * if (result.canUpload) {
+ *   // Proceed with upload
+ * } else {
+ *   console.error(result.error)
+ * }
+ */
 export function validateStorageQuota(
   currentUsage: number, 
   fileSize: number, 
@@ -212,6 +302,16 @@ export function validateStorageQuota(
   }
 }
 
+/**
+ * Validates multiple files against storage quota, filtering out files that would exceed limits
+ * @param currentUsage - Current storage usage in bytes
+ * @param files - Array of File objects to validate
+ * @param storageLimit - Maximum storage limit in bytes (defaults to STORAGE_LIMIT)
+ * @returns Object containing valid files, rejected files with reasons, and storage info
+ * @example
+ * const result = validateMultipleFilesStorage(currentUsage, selectedFiles)
+ * // Upload result.validFiles, show warnings for result.rejectedFiles
+ */
 export function validateMultipleFilesStorage(
   currentUsage: number,
   files: File[],

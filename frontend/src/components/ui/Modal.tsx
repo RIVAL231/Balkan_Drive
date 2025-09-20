@@ -2,15 +2,52 @@ import React from 'react'
 import { X, AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+/**
+ * Props for the Modal component
+ */
 export interface ModalProps {
+  /** Whether the modal is currently open/visible */
   isOpen: boolean
+  /** Callback function called when modal should be closed */
   onClose: () => void
+  /** Optional title for the modal header */
   title?: string
+  /** The content to display inside the modal */
   children: React.ReactNode
+  /** Size variant for the modal (default: 'md') */
   size?: 'sm' | 'md' | 'lg' | 'xl'
+  /** Whether to show the close button in the header (default: true) */
   showCloseButton?: boolean
 }
 
+/**
+ * Modal component for displaying content in an overlay
+ * 
+ * Features:
+ * - Portal rendering for proper z-index layering
+ * - Responsive size variants (sm, md, lg, xl)
+ * - Keyboard navigation (Escape to close)
+ * - Backdrop click to close
+ * - Smooth animations and transitions
+ * - Accessibility features (ARIA attributes, focus management)
+ * - Body scroll lock when open
+ * - Optional header with title and close button
+ * 
+ * @example
+ * ```tsx
+ * <Modal 
+ *   isOpen={showModal} 
+ *   onClose={() => setShowModal(false)}
+ *   title="Edit Profile"
+ *   size="lg"
+ * >
+ *   <form onSubmit={handleSubmit}>
+ *     <Input label="Name" {...register("name")} />
+ *     <Button type="submit">Save Changes</Button>
+ *   </form>
+ * </Modal>
+ * ```
+ */
 const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
@@ -62,19 +99,52 @@ const Modal: React.FC<ModalProps> = ({
 
 export default Modal
 
-// Alert Modal Component
+/**
+ * Props for the AlertModal component
+ */
 export interface AlertModalProps {
+  /** Whether the alert modal is currently open/visible */
   isOpen: boolean
+  /** Callback function called when modal should be closed */
   onClose: () => void
+  /** Title text for the alert */
   title: string
+  /** Message content to display */
   message: string
+  /** Visual type/severity of the alert (default: 'info') */
   type?: 'success' | 'error' | 'warning' | 'info'
+  /** Text for the confirm button (default: 'OK') */
   confirmText?: string
+  /** Optional callback for when confirm button is clicked */
   onConfirm?: () => void
+  /** Text for the cancel button (default: 'Cancel') */
   cancelText?: string
+  /** Whether to show a cancel button (default: false) */
   showCancel?: boolean
 }
 
+/**
+ * AlertModal component for displaying alert messages with icons
+ * 
+ * Features:
+ * - Different visual types (success, error, warning, info) with appropriate icons and colors
+ * - Optional confirm action handler
+ * - Configurable cancel button
+ * - Responsive design with mobile-optimized touch targets
+ * - Accessible button ordering and keyboard navigation
+ * 
+ * @example
+ * ```tsx
+ * <AlertModal
+ *   isOpen={showAlert}
+ *   onClose={() => setShowAlert(false)}
+ *   title="Upload Complete"
+ *   message="Your files have been successfully uploaded."
+ *   type="success"
+ *   onConfirm={() => router.push('/files')}
+ * />
+ * ```
+ */
 export const AlertModal: React.FC<AlertModalProps> = ({
   isOpen,
   onClose,
@@ -149,17 +219,51 @@ export const AlertModal: React.FC<AlertModalProps> = ({
   )
 }
 
-// Confirmation Modal Component
+/**
+ * Props for the ConfirmModal component
+ */
 export interface ConfirmModalProps {
+  /** Whether the confirmation modal is currently open/visible */
   isOpen: boolean
+  /** Callback function called when modal should be closed */
   onClose: () => void
+  /** Title text for the confirmation dialog */
   title: string
+  /** Message content explaining what will happen */
   message: string
+  /** Text for the confirm button (default: 'Confirm') */
   confirmText?: string
+  /** Text for the cancel button (default: 'Cancel') */
   cancelText?: string
+  /** Callback function for when user confirms the action */
   onConfirm: () => void
+  /** Visual style indicating the severity of the action (default: 'info') */
   type?: 'danger' | 'warning' | 'info'
 }
+
+/**
+ * ConfirmModal component for user confirmation dialogs
+ * 
+ * Features:
+ * - Different visual styles based on action severity
+ * - Clear confirm/cancel button distinction
+ * - Warning icon and appropriate colors for dangerous actions
+ * - Responsive design with mobile-first approach
+ * - Accessible keyboard navigation and screen reader support
+ * 
+ * @example
+ * ```tsx
+ * <ConfirmModal
+ *   isOpen={showDeleteConfirm}
+ *   onClose={() => setShowDeleteConfirm(false)}
+ *   title="Delete File"
+ *   message="Are you sure you want to delete this file? This action cannot be undone."
+ *   type="danger"
+ *   confirmText="Delete"
+ *   onConfirm={handleDeleteFile}
+ * />
+ * ```
+ */
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen,

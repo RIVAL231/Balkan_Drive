@@ -6,32 +6,77 @@ import { formatFileSize, formatRelativeTime, getFileIcon } from "@/lib/utils"
 import ContextMenu from "@/components/ui/ContextMenu"
 import { createPortal } from "react-dom"
 
+/**
+ * Props for the FileCard component
+ */
 interface FileCardProps {
+  /** File data object containing all file information */
   file: {
+    /** Unique file identifier */
     id: string
+    /** Original filename with extension */
     filename: string
+    /** MIME type of the file */
     filetype: string
+    /** File size in bytes */
     filesize: number
+    /** Whether file is publicly accessible */
     isPublic: boolean
+    /** Whether file has public sharing enabled */
     isPublicShared: boolean
+    /** Timestamp when public sharing was enabled */
     publicShareEnabledAt?: string
+    /** User who enabled public sharing */
     publicShareEnabledBy?: {
       id: string
       username: string
     }
+    /** File creation timestamp */
     createdAt: string
+    /** File owner information */
     owner: {
       username: string
     }
   }
+  /** Callback for sharing file with other users */
   onShare?: (fileId: string) => void
+  /** Callback for deleting the file */
   onDelete?: (fileId: string) => void
+  /** Callback for toggling file visibility (public/private) */
   onToggleVisibility?: (fileId: string, isPublic: boolean) => void
+  /** Callback for downloading the file */
   onDownload?: () => void
+  /** Callback for moving file to a different folder */
   onMoveToFolder?: (fileId: string) => void
+  /** Callback for showing file download statistics */
   onShowStats?: (fileId: string, fileName: string) => void
 }
 
+/**
+ * FileCard component for displaying file information with actions
+ * 
+ * Features:
+ * - File type icon and metadata display
+ * - Context menu with file operations (download, share, delete, etc.)
+ * - Public/private visibility indicators
+ * - Responsive design with mobile-optimized touch targets
+ * - Keyboard navigation support
+ * - File statistics and download tracking
+ * - Move to folder functionality
+ * 
+ * @example
+ * ```tsx
+ * <FileCard
+ *   file={fileData}
+ *   onShare={(fileId) => handleShare(fileId)}
+ *   onDelete={(fileId) => handleDelete(fileId)}
+ *   onToggleVisibility={(fileId, isPublic) => handleVisibilityChange(fileId, isPublic)}
+ *   onDownload={() => handleDownload()}
+ *   onMoveToFolder={(fileId) => handleMoveToFolder(fileId)}
+ *   onShowStats={(fileId, fileName) => handleShowStats(fileId, fileName)}
+ * />
+ * ```
+ */
 function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onMoveToFolder, onShowStats }: FileCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number }>({

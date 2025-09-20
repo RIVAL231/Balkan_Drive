@@ -25,7 +25,7 @@ function Header({ onMenuClick }: HeaderProps) {
   }, [])
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 relative z-50">
+    <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 relative z-[60]">
       <div className="flex items-center justify-between">
         {/* Mobile menu button and Logo */}
         <div className="flex items-center space-x-3">
@@ -37,11 +37,11 @@ function Header({ onMenuClick }: HeaderProps) {
           >
             <Menu className="w-5 h-5 text-gray-600" />
           </button>
-          
+
           <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <HardDrive className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
+            <HardDrive className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900">FileStorage</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900">Balkan Drive</h1>
         </div>
 
         {/* Search Bar

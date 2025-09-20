@@ -5,6 +5,32 @@ import Breadcrumb from "@/components/ui/Breadcrumb"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 import Button from "@/components/ui/Button"
 
+/**
+ * PublicFiles page component for browsing and downloading publicly shared files
+ * 
+ * Features:
+ * - Browse all publicly accessible files in the system
+ * - File download functionality with progress tracking
+ * - File metadata display (size, type, owner, upload date)
+ * - File type icons and visual indicators
+ * - Responsive grid layout for file cards
+ * - Loading states and error handling
+ * - Download tracking and analytics
+ * - Search and filtering capabilities (when integrated)
+ * - Mobile-optimized interface
+ * 
+ * @example
+ * ```tsx
+ * // Used as a route component (accessible to all users)
+ * <Route path="/public" component={PublicFiles} />
+ * 
+ * // Displays publicly shared files including:
+ * // - Files marked as public by their owners
+ * // - Download buttons for immediate access
+ * // - File metadata and sharing information
+ * // - Owner information for transparency
+ * ```
+ */
 export default function PublicFiles() {
   const { publicFiles, loading, error } = usePublicFiles()
   const { downloadFile, loading: downloading } = useDownloadPublicFile()

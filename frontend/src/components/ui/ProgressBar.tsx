@@ -1,14 +1,57 @@
 import { cn } from "@/lib/utils"
 
+/**
+ * Props for the ProgressBar component
+ */
 interface ProgressBarProps {
+  /** Current progress value */
   value: number
+  /** Maximum possible value */
   max: number
+  /** Optional label to display above the progress bar */
   label?: string
+  /** Whether to show percentage text (default: true) */
   showPercentage?: boolean
+  /** Color theme for the progress bar (default: "blue") */
   color?: "blue" | "green" | "yellow" | "red"
+  /** Additional CSS classes */
   className?: string
 }
 
+/**
+ * ProgressBar component for displaying progress and completion states
+ * 
+ * Features:
+ * - Customizable progress value and maximum
+ * - Color variants for different states (blue, green, yellow, red)
+ * - Optional label and percentage display
+ * - Responsive design with proper accessibility
+ * - Smooth visual progress indication
+ * - Clean styling with rounded corners
+ * 
+ * @example
+ * ```tsx
+ * // Basic progress bar
+ * <ProgressBar value={75} max={100} />
+ * 
+ * // Storage usage with custom color and label
+ * <ProgressBar 
+ *   value={storageUsed} 
+ *   max={storageLimit} 
+ *   label="Storage Usage"
+ *   color={storageUsed > storageLimit * 0.9 ? "red" : "green"}
+ *   showPercentage
+ * />
+ * 
+ * // File upload progress
+ * <ProgressBar 
+ *   value={uploadProgress} 
+ *   max={100} 
+ *   label="Uploading file..."
+ *   color="blue"
+ * />
+ * ```
+ */
 export default function ProgressBar({
   value,
   max,

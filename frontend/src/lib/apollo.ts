@@ -7,10 +7,33 @@ import UploadHttpLink from "../../node_modules/apollo-upload-client/UploadHttpLi
 import toast from "react-hot-toast"
 import { config } from "./config"
 
+/**
+ * Apollo Upload Link for handling file uploads via GraphQL
+ * 
+ * Provides multipart form data support for file uploads through GraphQL mutations.
+ * Uses the apollo-upload-client library to handle file uploads to the backend.
+ */
 const uploadLink = new UploadHttpLink({
   uri: config.apiUrl,
 })
 
+/**
+ * Apollo authentication link for adding JWT tokens to requests
+ * 
+ * Features:
+ * - Automatically adds Bearer token to authenticated requests
+ * - Skips authentication for login/register operations
+ * - Retrieves token from localStorage
+ * - Handles missing token scenarios gracefully
+ * 
+ * @example
+ * ```typescript
+ * // Token is automatically added to headers for authenticated operations
+ * const { data } = await apolloClient.query({
+ *   query: MY_FILES_QUERY
+ * })
+ * ```
+ */
 const authLink = setContext((operation, { headers }) => {
   // Skip adding auth header for login and register mutations
   const operationName = operation.operationName;
@@ -42,6 +65,23 @@ const authLink = setContext((operation, { headers }) => {
   }
 })
 
+/**
+ * Apollo error link for handling GraphQL and network errors
+ * 
+ * Features:
+ * - Automatic logout and redirect on authentication errors
+ * - User-friendly error notifications via toast messages
+ * - Network error handling with appropriate user feedback
+ * - Silent handling for expected operation errors
+ * - Centralized error management across the application
+ * 
+ * @example
+ * ```typescript
+ * // Errors are automatically handled globally
+ * // Authentication errors trigger logout and redirect
+ * // Other errors show toast notifications to user
+ * ```
+ */
 const errorLink = onError((errorResponse: unknown) => {
   const { graphQLErrors, networkError, operation } = errorResponse as {
     graphQLErrors?: Array<{ message: string; extensions?: { code: string } }>;
@@ -79,6 +119,35 @@ const errorLink = onError((errorResponse: unknown) => {
   }
 })
 
+/**
+ * Apollo Client instance configured for the Balkan Drive application
+ * 
+ * Configuration:
+ * - Upload support for file operations via apollo-upload-client
+ * - JWT authentication with automatic token management
+ * - Comprehensive error handling with user feedback
+ * - Intelligent caching policies for different data types
+ * - Type-safe cache policies for query optimization
+ * 
+ * Cache Policies:
+ * - Files, shared files, public files: Always fetch fresh data
+ * - Audit logs: Fresh data to ensure security compliance
+ * - User statistics: Cached for performance
+ * 
+ * @example
+ * ```typescript
+ * import { apolloClient } from '@/lib/apollo'
+ * 
+ * // Use in components via hooks
+ * const { data } = useQuery(MY_QUERY)
+ * 
+ * // Direct usage
+ * const result = await apolloClient.query({
+ *   query: MY_QUERY,
+ *   variables: { id: '123' }
+ * })
+ * ```
+ */
 export const apolloClient = new ApolloClient({
   link: from([errorLink, authLink, uploadLink]),
   cache: new InMemoryCache({

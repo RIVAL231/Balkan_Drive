@@ -3,20 +3,62 @@
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+/**
+ * Interface for individual context menu items
+ */
 interface ContextMenuItem {
+  /** Unique identifier for the menu item */
   id: string
+  /** Display label for the menu item */
   label: string
+  /** Icon to display before the label */
   icon?: React.ReactNode
+  /** Click handler for the menu item */
   onClick: () => void
+  /** Whether the item is disabled */
   disabled?: boolean
 }
 
+/**
+ * Props for the ContextMenu component
+ */
 interface ContextMenuProps {
+  /** Array of menu items to display */
   items: ContextMenuItem[]
+  /** Callback when menu should be closed */
   onClose: () => void
+  /** Position coordinates for menu display */
   position: { x: number; y: number }
 }
 
+/**
+ * ContextMenu component for right-click and action menus
+ * 
+ * Features:
+ * - Portal rendering for proper z-index layering
+ * - Smart positioning to stay within viewport
+ * - Keyboard navigation support (Escape to close)
+ * - Click outside to close functionality
+ * - Disabled item states with visual feedback
+ * - Icon support for menu items
+ * - Mobile-friendly touch targets
+ * - Smooth animations and transitions
+ * 
+ * @example
+ * ```tsx
+ * const menuItems = [
+ *   { id: '1', label: "Download", icon: <Download />, onClick: handleDownload },
+ *   { id: '2', label: "Share", icon: <Share />, onClick: handleShare },
+ *   { id: '3', label: "Delete", icon: <Trash />, onClick: handleDelete, disabled: !canDelete }
+ * ]
+ * 
+ * <ContextMenu
+ *   items={menuItems}
+ *   position={{ x: mouseX, y: mouseY }}
+ *   onClose={() => setShowMenu(false)}
+ * />
+ * ```
+ */
 export default function ContextMenu({ items, onClose, position }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const [adjustedPosition, setAdjustedPosition] = useState(position)

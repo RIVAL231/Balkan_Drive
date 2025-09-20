@@ -9,6 +9,32 @@ import { useDownloadUrl } from "@/hooks/useFiles"
 import { useAuth } from "@/hooks/auth"
 import { useFileOperations } from "@/hooks/useFiles"
 
+/**
+ * SharedFiles page component for managing files shared with and by the current user
+ * 
+ * Features:
+ * - View files shared with the current user by others
+ * - View files the current user has shared with others
+ * - Download shared files with permission checking
+ * - Unshare files (remove sharing permissions)
+ * - File metadata display with sharing information
+ * - Loading states and error handling
+ * - Empty state handling when no shared files exist
+ * - Real-time updates when sharing changes
+ * - Permission-based actions and visibility
+ * - Responsive design for mobile access
+ * 
+ * @example
+ * ```tsx
+ * // Used as a route component
+ * <Route path="/shared" component={SharedFiles} />
+ * 
+ * // Displays two categories of shared files:
+ * // 1. Files shared TO the user (received shares)
+ * // 2. Files shared BY the user (given shares)
+ * // with appropriate actions for each category
+ * ```
+ */
 export default function SharedFiles() {
   const { unshareFile } = useFileOperations()
   const { downloadFile } = useDownloadUrl()

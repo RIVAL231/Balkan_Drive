@@ -1,7 +1,9 @@
 import { useQuery, useMutation } from '@apollo/client/react'
 import { gql } from '@apollo/client'
 
-// GraphQL Queries and Mutations
+/**
+ * GraphQL query to list all publicly accessible files
+ */
 const LIST_PUBLIC_FILES_QUERY = gql`
   query ListPublicFiles {
     listPublicFiles {
@@ -20,6 +22,9 @@ const LIST_PUBLIC_FILES_QUERY = gql`
   }
 `
 
+/**
+ * GraphQL query to get download statistics for a specific file
+ */
 const GET_FILE_DOWNLOAD_STATS_QUERY = gql`
   query GetFileDownloadStats($fileId: ID!) {
     getFileDownloadStats(fileId: $fileId) {
@@ -37,6 +42,9 @@ const GET_FILE_DOWNLOAD_STATS_QUERY = gql`
   }
 `
 
+/**
+ * GraphQL mutation to share a file publicly
+ */
 const SHARE_FILE_PUBLICLY_MUTATION = gql`
   mutation ShareFilePublicly($fileId: ID!) {
     shareFilePublicly(fileId: $fileId)

@@ -5,6 +5,9 @@ import {  gql } from "@apollo/client"
 import { useMutation, useQuery } from "@apollo/client/react"
 import { apolloClient } from "../lib/apollo"
 
+/**
+ * GraphQL query to fetch current user information
+ */
 const ME_QUERY = gql`
   query Me {
     me {
@@ -16,6 +19,9 @@ const ME_QUERY = gql`
   }
 `
 
+/**
+ * GraphQL mutation for user login
+ */
 const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
     login(email: $email, password: $password) {
@@ -30,6 +36,9 @@ const LOGIN_MUTATION = gql`
   }
 `
 
+/**
+ * GraphQL mutation for user registration
+ */
 const REGISTER_MUTATION = gql`
   mutation Register($username: String!, $email: String!, $password: String!, $role: String!) {
     register(username: $username, email: $email, password: $password, role: $role) {
@@ -44,26 +53,70 @@ const REGISTER_MUTATION = gql`
   }
 `
 
+/**
+ * User data interface
+ */
 interface User {
+  /** Unique user identifier */
   id: string
+  /** User's chosen username */
   username: string
+  /** User's email address */
   email: string
+  /** User's role (e.g., 'user', 'admin') */
   role: string
 }
 
+/**
+ * Authentication context interface defining available auth methods
+ */
 interface AuthContextType {
+  /** Currently authenticated user, null if not logged in */
   user: User | null
+  /** Whether auth state is currently being determined */
   loading: boolean
+  /** Login function that authenticates user with email/password */
   login: (email: string, password: string) => Promise<void>
+  /** Register function that creates new user account */
   register: (username: string, email: string, password: string, role: string) => Promise<void>
+  /** Change password function for authenticated users */
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
+  /** Logout function that clears user session */
   logout: () => void
 }
 
+/**
+ * React context for authentication state and methods
+ */
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export { AuthContext }
 
+/**
+ * AuthProvider component that manages authentication state for the entire app
+ * 
+ * Features:
+ * - Automatic token validation on app load
+ * - Persistent authentication across browser sessions
+ * - GraphQL integration for auth operations
+ * - Loading states during auth operations
+ * - Automatic logout on token expiration
+ * - Client-side token storage management
+ * 
+ * @example
+ * ```tsx
+ * // Wrap your app with AuthProvider
+ * function App() {
+ *   return (
+ *     <AuthProvider>
+ *       <Router>
+ *         <Routes>...</Routes>
+ *       </Router>
+ *     </AuthProvider>
+ *   )
+ * }
+ * ```
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -319,4 +372,44 @@ const changePassword = async (currentPassword: string, newPassword: string) => {
 
   return <AuthContext.Provider value={{ user, loading, login, register, logout, changePassword }}>{children}</AuthContext.Provider>
 }
+
+/**
+ * Custom hook to access authentication context
+ * 
+ * Provides access to the current user, authentication state, and auth methods.
+ * Must be used within an AuthProvider component tree.
+ * 
+ * @throws {Error} When used outside of AuthProvider
+ * 
+ * @example
+ * ```tsx
+ * function UserProfile() {
+ *   const { user, logout, loading } = useAuth()
+ *   
+ *   if (loading) return <LoadingSpinner />
+ *   if (!user) return <LoginPage />
+ *   
+ *   return (
+ *     <div>
+ *       <h1>Welcome, {user.username}!</h1>
+ *       <Button onClick={logout}>Logout</Button>
+ *     </div>
+ *   )
+ * }
+ * 
+ * // In a login form
+ * function LoginForm() {
+ *   const { login } = useAuth()
+ *   
+ *   const handleSubmit = async (email: string, password: string) => {
+ *     try {
+ *       await login(email, password)
+ *       // User is now logged in, redirect or update UI
+ *     } catch (error) {
+ *       // Handle login error
+ *     }
+ *   }
+ * }
+ * ```
+ */
 

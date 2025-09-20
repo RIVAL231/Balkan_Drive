@@ -6,6 +6,27 @@ import StatCard from "@/components/ui/StatCard"
 import ProgressBar from "@/components/ui/ProgressBar"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 
+/**
+ * Statistics page component for displaying user storage and file analytics
+ * 
+ * Features:
+ * - Personal storage usage statistics with deduplication savings
+ * - File count and sharing metrics visualization
+ * - Storage efficiency analysis and savings percentage
+ * - Progress bars for visual representation of usage
+ * - Responsive card-based layout design
+ * - Real-time data updates from GraphQL backend
+ * - Mobile-optimized display with appropriate spacing
+ * 
+ * @example
+ * ```tsx
+ * // Used as a route component
+ * <Route path="/statistics" component={Statistics} />
+ * 
+ * // Displays user's personal file and storage statistics
+ * // including deduplication savings and sharing activity
+ * ```
+ */
 export default function Statistics() {
   const { stats, loading } = useStorageStats()
 

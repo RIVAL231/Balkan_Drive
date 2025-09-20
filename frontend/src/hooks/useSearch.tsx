@@ -3,6 +3,9 @@ import { useLazyQuery } from '@apollo/client/react'
 import { gql } from '@apollo/client'
 import type { SearchFilters, SearchResult, SortOption } from '@/types/search'
 
+/**
+ * GraphQL query for searching files with comprehensive filtering and sorting
+ */
 const SEARCH_FILES = gql`
   query SearchFiles(
     $query: String

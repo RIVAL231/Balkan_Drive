@@ -56,9 +56,22 @@ go run server.go
 **Frontend:**
 ```powershell
 cd frontend
-npm ci
+npm install
 npm run dev
 ```
+**Database:**
+```powershell
+cd backend
+docker compose up
+```
+
+**Setting up Migrations**
+```powershell
+cd backend
+cd internal
+migrate -path migrations -database "postgres://admin:admin@localhost:5432/graphqlmvp?sslmode=disable" up
+```
+Note: Make sure you have `migrate` CLI tool installed. See [golang-migrate/migrate](https://github.com/golang-migrate/migrate)
 
 **Environment Variables:**
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (PostgreSQL)
