@@ -32,8 +32,15 @@ interface AuditLogFilters {
   resourceType?: string
 }
 
+interface UserAuditLogsData {
+  getUserAuditLogs: AuditLogConnection;
+}
+interface AuditLogsData {
+  getAuditLogs: AuditLogConnection;
+}
+
 export const useAuditLogs = (filters: AuditLogFilters = {}) => {
-  const { data, loading, error, refetch } = useQuery(GET_AUDIT_LOGS, {
+  const { data, loading, error, refetch } = useQuery<AuditLogsData>(GET_AUDIT_LOGS, {
     variables: {
       limit: filters.limit || 50,
       offset: filters.offset || 0,
@@ -52,8 +59,10 @@ export const useAuditLogs = (filters: AuditLogFilters = {}) => {
   }
 }
 
+
+
 export const useUserAuditLogs = (limit = 50, offset = 0) => {
-  const { data, loading, error, refetch } = useQuery(GET_USER_AUDIT_LOGS, {
+  const { data, loading, error, refetch } = useQuery<UserAuditLogsData>(GET_USER_AUDIT_LOGS, {
     variables: { limit, offset },
     fetchPolicy: 'cache-and-network',
   })

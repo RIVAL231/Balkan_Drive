@@ -221,14 +221,31 @@ func (r *mutationResolver) UploadFile(ctx context.Context, filename string, file
 		return nil, fmt.Errorf("authentication required: %v", err)
 	}
 
+	// Read file content for hashing while preserving original stream
 	hash := sha256.New()
 	var fileContent bytes.Buffer
-	teeReader := io.TeeReader(file.File, &fileContent)
-	if _, err := io.Copy(hash, teeReader); err != nil {
+	
+	// Create a multi-writer to hash and buffer simultaneously
+	multiWriter := io.MultiWriter(hash, &fileContent)
+	
+	// Copy the file content to both hash and buffer
+	if _, err := io.Copy(multiWriter, file.File); err != nil {
 		return nil, fmt.Errorf("failed to read file content: %v", err)
 	}
+	
 	filehash := hex.EncodeToString(hash.Sum(nil))
-	actualFileSize := int64(fileContent.Len())
+	
+	// Use the original file size from the frontend (this is the actual file size)
+	actualFileSize := int64(filesize)
+	
+	// Get the size of what we read into the buffer
+	bufferSize := int64(fileContent.Len())
+	
+	// Log any size discrepancies for debugging
+	if bufferSize != actualFileSize {
+		log.Printf("File size discrepancy for %s: frontend_reported=%d, buffer_read=%d", 
+			filename, actualFileSize, bufferSize)
+	}
 	var refCount int
 	var existingStorageKey string
 	err = r.DB.QueryRow(ctx,
@@ -1395,7 +1412,7 @@ func (r *queryResolver) SearchFiles(ctx context.Context, query *string, mimeType
 	}
 
 	// MIME type filter
-	if mimeTypes != nil && len(mimeTypes) > 0 {
+	if len(mimeTypes) > 0 {
 		var mimeConditions []string
 		for _, mimeType := range mimeTypes {
 			if mimeType != "" {
@@ -1563,16 +1580,16 @@ func (r *queryResolver) SearchFiles(ctx context.Context, query *string, mimeType
 	}
 
 	// Generate facets for better search experience
-	// TODO: Fix generateSearchFacets method
-	// facets, err := r.generateSearchFacets(ctx, conditions, args[:len(args)-2])
-	// if err != nil {
-	//	// Don't fail the whole query if facets fail
-	facets := &model.SearchFacets{
-		MimeTypes:   []*model.MimeTypeFacet{},
+
+	facets, err := r.generateSearchFacets(ctx, conditions, args[:len(args)-2])
+	if err != nil {
+		// Don't fail the whole query if facets fail
+		facets = &model.SearchFacets{
+	    MimeTypes:   []*model.MimeTypeFacet{},
 		Uploaders:   []*model.UploaderFacet{},
 		SizeBuckets: []*model.SizeBucketFacet{},
 	}
-	// }
+}
 
 	hasMore := int32(*offset)+int32(len(files)) < totalCount
 
@@ -1986,15 +2003,21 @@ func (r *queryResolver) GetUserStatistics(ctx context.Context) (*model.UserStati
 		return nil, fmt.Errorf("failed to get file count: %v", err)
 	}
 
-	// Get total storage used by user
+	// Get original total size (sum of all individual file sizes, ignoring deduplication)
+	var originalSize int
+	err = r.DB.QueryRow(ctx, "SELECT COALESCE(SUM(filesize), 0) FROM files WHERE owner_id = $1", user.ID).Scan(&originalSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get original file sizes: %v", err)
+	}
+
+	// Get actual storage used (accounting for deduplication)
 	var totalUsed int
-	err = r.DB.QueryRow(ctx, "SELECT COALESCE(SUM(filesize), 0) FROM files WHERE owner_id = $1", user.ID).Scan(&totalUsed)
+	err = r.DB.QueryRow(ctx, "SELECT COALESCE(SUM(size_bytes), 0) FROM content WHERE sha256 IN (SELECT DISTINCT filehash FROM files WHERE owner_id = $1)", user.ID).Scan(&totalUsed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage usage: %v", err)
 	}
 
-	// Calculate original size (estimate based on typical compression ratios)
-	originalSize := int(float64(totalUsed) * 1.2) // Assume 20% compression savings
+	// Calculate savings from deduplication
 	savingsBytes := originalSize - totalUsed
 	savingsPercentage := float64(0)
 	if originalSize > 0 {
@@ -2016,9 +2039,9 @@ func (r *queryResolver) GetUserStatistics(ctx context.Context) (*model.UserStati
 	}
 
 	return &model.UserStatistics{
-		TotalUsed:           int32(totalUsed),
-		OriginalSize:        int32(originalSize),
-		SavingsBytes:        int32(savingsBytes),
+		TotalUsed:           int32(totalUsed),           // Actual storage used (with deduplication)
+		OriginalSize:        int32(originalSize),        // Sum of all individual file sizes
+		SavingsBytes:        int32(savingsBytes),        // Space saved through deduplication
 		SavingsPercentage:   savingsPercentage,
 		FileCount:           int32(fileCount),
 		TotalSharedFiles:    int32(totalSharedFiles),

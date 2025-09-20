@@ -24,8 +24,8 @@ info:
     
     ## File Uploads
     File uploads use GraphQL multipart form data. The server supports:
-    - Maximum file size: 100MB
-    - Maximum memory usage: 50MB
+    - Maximum file size: 10MB
+    - Maximum memory usage: 10MB
     - Content deduplication via SHA256 hashing
     
   version: 1.0.0

@@ -56,6 +56,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (username: string, email: string, password: string, role: string) => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   logout: () => void
 }
 
@@ -281,6 +282,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     window.location.href = "/login"
   }
-
-  return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>
+  interface ChangePasswordResponse {
+  changePassword: {
+    success: boolean
+    message: string
+  }
 }
+
+
+const changePassword = async (currentPassword: string, newPassword: string) => {
+  const CHANGE_PASSWORD_MUTATION = gql`
+    mutation ChangePassword($currentPassword: String!, $newPassword: String!) {
+      changePassword(oldPassword: $currentPassword, newPassword: $newPassword) 
+      
+    }
+  `;
+  try {
+    const { data } = await apolloClient.mutate<ChangePasswordResponse>({
+      mutation: CHANGE_PASSWORD_MUTATION,
+      variables: { currentPassword, newPassword },
+      errorPolicy: 'none'
+    });
+    if (data?.changePassword?.success) {
+      // Handle successful password change (e.g., show a success message)
+      console.log(data.changePassword.message);
+    } else {
+      // Handle failed password change (e.g., show an error message)
+      console.error(data?.changePassword?.message || "Failed to change password");
+    }
+  } catch (error) {
+    console.error("Error changing password:", error);
+  }
+}
+
+
+
+  return <AuthContext.Provider value={{ user, loading, login, register, logout, changePassword }}>{children}</AuthContext.Provider>
+}
+

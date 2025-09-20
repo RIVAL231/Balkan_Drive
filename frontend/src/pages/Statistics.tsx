@@ -75,7 +75,7 @@ export default function Statistics() {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Compression Savings</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Deduplication Savings</h3>
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -84,7 +84,7 @@ export default function Statistics() {
             </div>
 
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Compressed Size</span>
+              <span className="text-sm text-gray-600">Deduplicated Size</span>
               <span className="font-medium">{formatFileSize(stats.totalUsed)}</span>
             </div>
 

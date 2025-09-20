@@ -4,12 +4,14 @@ import { useState, memo, useCallback } from "react"
 import { useAuth } from "@/hooks/auth"
 import { HardDrive, LogOut, Settings, Menu } from "lucide-react"
 import { useStorageStats } from "@/hooks/useStatistics"
+import ChangePassword from "../ui/ChangePassword"
 
 interface HeaderProps {
   onMenuClick?: () => void
 }
 
 function Header({ onMenuClick }: HeaderProps) {
+  const [ChangePasswordModal, openChangePasswordModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { user, logout } = useAuth()
   const { stats } = useStorageStats()
@@ -89,10 +91,20 @@ function Header({ onMenuClick }: HeaderProps) {
                 </div>
               </div>
 
-              <button className="w-full px-3 sm:px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+              {/* <button className="w-full px-3 sm:px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>
-              </button>
+              </button> */}
+
+
+                <button onClick={() => {openChangePasswordModal(true)}} className="w-full px-3 sm:px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+                  <Settings className="w-4 h-4" />
+                  <span >Change Password</span>
+                </button>
+                {ChangePasswordModal && (
+                  <ChangePassword onClose={() => openChangePasswordModal(false)} isOpen={ChangePasswordModal} />
+                )}
+             
 
               <button
                 onClick={logout}
