@@ -123,6 +123,17 @@ DEFAULT_STORAGE_QUOTA=104857600
 
 ### Common Issues
 
+**Docker Compose command not found:**
+- Modern Docker installations use `docker compose` (without hyphen) instead of `docker-compose`
+- The CI pipeline and health check scripts have been updated to use the new format
+- If you have an older Docker version, you may need to install docker-compose separately
+
+**Service naming issues:**
+- The pipeline uses the correct service names from docker-compose.yml:
+  - `database` (not `postgres`) for PostgreSQL
+  - `backend` for the Go API server
+  - `frontend` for the React application
+
 **Services not starting:**
 ```bash
 # Check container logs

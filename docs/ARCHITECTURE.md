@@ -212,8 +212,6 @@ type Claims struct {
 2. **Input Validation**: GraphQL schema validation + custom rules
 3. **SQL Injection Prevention**: Parameterized queries with pgx
 
-
-
 ### 3. Data Protection
 
 **Encryption at Rest and in Transit**:
@@ -284,8 +282,6 @@ services:
 - JSDoc for complex TypeScript functions
 - OpenAPI specification for API contracts
 - Architecture decision records (ADRs)
-
-
 
 ## Business Logic & Domain Model
 

@@ -66,7 +66,7 @@ jobs:
         
         # Wait for PostgreSQL to be ready
         echo "🗄️ Waiting for PostgreSQL..."
-        timeout 60 bash -c 'until docker compose exec -T postgres pg_isready -h localhost -U admin; do sleep 2; done'
+        timeout 60 bash -c 'until docker compose exec -T database pg_isready -h localhost -U admin; do sleep 2; done'
         
         # Wait for backend to be ready
         echo "🔧 Waiting for backend..."
@@ -83,15 +83,15 @@ jobs:
         echo "🗄️ Testing PostgreSQL database..."
         
         # Test database connection
-        docker compose exec -T postgres psql -U admin -d graphqlmvp -c "SELECT version();"
+        docker compose exec -T database psql -U admin -d graphqlmvp -c "SELECT version();"
         
         # Check if tables exist (migrations should have run)
         echo "📋 Checking database schema..."
-        TABLES=$(docker compose exec -T postgres psql -U admin -d graphqlmvp -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
+        TABLES=$(docker compose exec -T database psql -U admin -d graphqlmvp -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
         echo "Tables found: $TABLES"
         
         # Verify essential tables exist
-        docker compose exec -T postgres psql -U admin -d graphqlmvp -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('users', 'files', 'folders', 'content');"
+        docker compose exec -T database psql -U admin -d graphqlmvp -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('users', 'files', 'folders', 'content');"
 
     - name: Test Backend API Health
       run: |
@@ -172,7 +172,7 @@ jobs:
         echo "🔍 Testing database migrations and data integrity..."
         
         # Check if the registered user exists in database
-        USER_COUNT=$(docker compose exec -T postgres psql -U admin -d graphqlmvp -t -c "SELECT COUNT(*) FROM users WHERE email = 'test@example.com';")
+        USER_COUNT=$(docker compose exec -T database psql -U admin -d graphqlmvp -t -c "SELECT COUNT(*) FROM users WHERE email = 'test@example.com';")
         echo "Users with test email: $USER_COUNT"
         
         if [ "$(echo $USER_COUNT | tr -d ' ')" != "1" ]; then
@@ -241,7 +241,7 @@ jobs:
         echo "=== Frontend logs ==="
         docker compose logs frontend
         echo "=== Database logs ==="
-        docker compose logs postgres
+        docker compose logs database
 
     - name: Cleanup
       if: always()
