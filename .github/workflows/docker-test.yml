@@ -1,0 +1,66 @@
+name: Docker Compose Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  docker-compose-test:
+    name: Test Docker Compose Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create test environment
+      run: |
+        cat > .env << EOF
+        DB_HOST=postgres
+        DB_PORT=5432
+        DB_USER=admin
+        DB_PASSWORD=admin
+        DB_NAME=graphqlmvp
+        JWT_SECRET=test-jwt-secret
+        AWS_REGION=eu-north-1
+        AWS_ACCESS_KEY_ID=test-key
+        AWS_SECRET_ACCESS_KEY=test-secret
+        S3_BUCKET=test-bucket
+        EOF
+
+    - name: Start services
+      run: |
+        echo "🚀 Starting Balkan Drive..."
+        docker-compose up -d --build
+        
+        echo "📊 Waiting for services..."
+        sleep 30
+        
+        echo "🔍 Service status:"
+        docker-compose ps
+
+    - name: Run health checks
+      run: |
+        echo "🏥 Running health checks..."
+        
+        # Make health check script executable
+        chmod +x scripts/health-check.sh
+        
+        # Run health check
+        ./scripts/health-check.sh
+
+    - name: Show logs on failure
+      if: failure()
+      run: |
+        echo "📋 Service logs:"
+        docker-compose logs --tail=50
+
+    - name: Cleanup
+      if: always()
+      run: |
+        docker-compose down -v
+        docker system prune -f

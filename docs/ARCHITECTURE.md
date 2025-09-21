@@ -16,7 +16,7 @@ Balkan Drive is a secure, scalable file storage system built with modern web tec
                                 │
                                 ▼
                         ┌─────────────────┐
-                        │   AWS S3/Minio  │
+                        │   AWS S3        │
                         │  (Blob Storage) │
                         └─────────────────┘
 ```
