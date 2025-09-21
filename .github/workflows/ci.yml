@@ -18,8 +18,8 @@ env:
   AWS_ACCESS_KEY_ID: test-key
   AWS_SECRET_ACCESS_KEY: test-secret
   S3_BUCKET: test-bucket
-  RATE_LIMIT: 10.0
-  RATE_LIMIT_BURST: 20
+  RATE_LIMIT: 2.0
+  RATE_LIMIT_BURST: 5
   DEFAULT_STORAGE_QUOTA: 104857600
 
 jobs:
@@ -55,38 +55,38 @@ jobs:
 
     - name: Start application stack
       run: |
-        echo "🚀 Starting Balkan Drive application stack..."
+        echo "Starting Balkan Drive application stack..."
         docker compose up -d --build
-        echo "📊 Container status:"
+        echo " Container status:"
         docker compose ps
 
     - name: Wait for services to be ready
       run: |
-        echo "⏳ Waiting for services to start..."
+        echo " Waiting for services to start..."
         
         # Wait for PostgreSQL to be ready
-        echo "🗄️ Waiting for PostgreSQL..."
+        echo " Waiting for PostgreSQL..."
         timeout 60 bash -c 'until docker compose exec -T database pg_isready -h localhost -U admin; do sleep 2; done'
         
         # Wait for backend to be ready
-        echo "🔧 Waiting for backend..."
+        echo " Waiting for backend..."
         timeout 120 bash -c 'until curl -f http://localhost:8080/health; do sleep 5; done'
         
         # Wait for frontend to be ready
-        echo "🌐 Waiting for frontend..."
+        echo " Waiting for frontend..."
         timeout 60 bash -c 'until curl -f http://localhost:3001; do sleep 3; done'
         
-        echo "✅ All services are ready!"
+        echo " All services are ready!"
 
     - name: Test Database Connection
       run: |
-        echo "🗄️ Testing PostgreSQL database..."
+        echo " Testing PostgreSQL database..."
         
         # Test database connection
         docker compose exec -T database psql -U admin -d graphqlmvp -c "SELECT version();"
         
         # Check if tables exist (migrations should have run)
-        echo "📋 Checking database schema..."
+        echo " Checking database schema..."
         TABLES=$(docker compose exec -T database psql -U admin -d graphqlmvp -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
         echo "Tables found: $TABLES"
         
@@ -95,43 +95,43 @@ jobs:
 
     - name: Test Backend API Health
       run: |
-        echo "🔧 Testing backend API..."
+        echo " Testing backend API..."
         
         # Test health endpoint
         HEALTH_RESPONSE=$(curl -s http://localhost:8080/health)
         echo "Health check response: $HEALTH_RESPONSE"
         
         # Test GraphQL endpoint (introspection query)
-        echo "📡 Testing GraphQL endpoint..."
+        echo " Testing GraphQL endpoint..."
         curl -X POST http://localhost:8080/query \
           -H "Content-Type: application/json" \
           -d '{"query": "{ __schema { types { name } } }"}'
 
     - name: Test Frontend Accessibility
       run: |
-        echo "🌐 Testing frontend..."
+        echo " Testing frontend..."
         
         # Test if frontend serves the main page
         FRONTEND_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001)
         echo "Frontend HTTP status: $FRONTEND_RESPONSE"
         
         if [ "$FRONTEND_RESPONSE" != "200" ]; then
-          echo "❌ Frontend not responding correctly"
+          echo " Frontend not responding correctly"
           exit 1
         fi
         
         # Check if React app is loading (look for React-specific content)
         CONTENT=$(curl -s http://localhost:3001)
         if [[ $CONTENT == *"<div id=\"root\">"* ]]; then
-          echo "✅ React app container found"
+          echo "React app container found"
         else
-          echo "❌ React app container not found"
+          echo "React app container not found"
           exit 1
         fi
 
     - name: Test End-to-End User Registration Flow
       run: |
-        echo "👤 Testing user registration and authentication..."
+        echo "Testing user registration and authentication..."
         
         # Test user registration
         REGISTER_RESPONSE=$(curl -s -X POST http://localhost:8080/query \
@@ -146,11 +146,11 @@ jobs:
         TOKEN=$(echo $REGISTER_RESPONSE | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
         
         if [ -z "$TOKEN" ]; then
-          echo "❌ Failed to get authentication token"
+          echo " Failed to get authentication token"
           exit 1
         fi
         
-        echo "✅ User registration successful, token received"
+        echo " User registration successful, token received"
         
         # Test authenticated query with the token
         AUTH_TEST=$(curl -s -X POST http://localhost:8080/query \
@@ -161,30 +161,30 @@ jobs:
         echo "Authenticated query response: $AUTH_TEST"
         
         if [[ $AUTH_TEST == *"listFiles"* ]]; then
-          echo "✅ Authentication working correctly"
+          echo " Authentication working correctly"
         else
-          echo "❌ Authentication failed"
+          echo " Authentication failed"
           exit 1
         fi
 
     - name: Test Database Migrations and Data Integrity
       run: |
-        echo "🔍 Testing database migrations and data integrity..."
+        echo "Testing database migrations and data integrity..."
         
         # Check if the registered user exists in database
         USER_COUNT=$(docker compose exec -T database psql -U admin -d graphqlmvp -t -c "SELECT COUNT(*) FROM users WHERE email = 'test@example.com';")
         echo "Users with test email: $USER_COUNT"
         
         if [ "$(echo $USER_COUNT | tr -d ' ')" != "1" ]; then
-          echo "❌ User not found in database"
+          echo " User not found in database"
           exit 1
         fi
         
-        echo "✅ Database integrity verified"
+        echo " Database integrity verified"
 
     - name: Test Rate Limiting
       run: |
-        echo "🚦 Testing rate limiting..."
+        echo "Testing rate limiting..."
         
         # Test rate limiting by making multiple requests quickly
         for i in {1..25}; do
@@ -193,18 +193,18 @@ jobs:
             -d '{"query": "{ __schema { types { name } } }"}')
           
           if [ "$STATUS" = "429" ]; then
-            echo "✅ Rate limiting is working (got 429 Too Many Requests)"
+            echo " Rate limiting is working (got 429 Too Many Requests)"
             break
           fi
           
           if [ $i -eq 25 ]; then
-            echo "⚠️ Rate limiting may not be working as expected (no 429 received)"
+            echo " Rate limiting may not be working as expected (no 429 received)"
           fi
         done
 
     - name: Test File Upload Endpoint
       run: |
-        echo "📁 Testing file upload endpoints..."
+        echo " Testing file upload endpoints..."
         
         # First get authentication token
         REGISTER_RESPONSE=$(curl -s -X POST http://localhost:8080/query \
@@ -226,16 +226,16 @@ jobs:
         echo "Upload intent response: $UPLOAD_INTENT"
         
         if [[ $UPLOAD_INTENT == *"uploadToken"* ]]; then
-          echo "✅ File upload endpoint working"
+          echo " File upload endpoint working"
         else
-          echo "❌ File upload endpoint failed"
+          echo " File upload endpoint failed"
           exit 1
         fi
 
     - name: Show container logs on failure
       if: failure()
       run: |
-        echo "📋 Container logs for debugging:"
+        echo " Container logs for debugging:"
         echo "=== Backend logs ==="
         docker-compose logs backend
         echo "=== Frontend logs ==="
@@ -246,6 +246,6 @@ jobs:
     - name: Cleanup
       if: always()
       run: |
-        echo "🧹 Cleaning up..."
-        docker-compose down -v
+        echo " Cleaning up..."
+        docker compose down -v
         docker system prune -f

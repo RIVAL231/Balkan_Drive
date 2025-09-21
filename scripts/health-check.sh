@@ -213,7 +213,7 @@ show_service_status() {
 
 # Main execution
 main() {
-    log_info "🚀 Starting Balkan Drive Health Check..."
+    log_info "Starting Balkan Drive Health Check..."
     echo
     
     # Check if docker compose is running
@@ -246,7 +246,7 @@ main() {
     show_service_status
     echo
     
-    log_success "🎉 All health checks passed! Balkan Drive is running correctly."
+    log_success "All health checks passed! Balkan Drive is running correctly."
     log_info "You can access:"
     log_info "  • Frontend: http://localhost:3001"
     log_info "  • Backend API: http://localhost:8080/query"
