@@ -1,4 +1,4 @@
-import { Users, FileText, HardDrive, TrendingUp, Shield, Globe, Download, X } from "lucide-react"
+import { Users, FileText, Shield, Globe, Download, X } from "lucide-react"
 import { useAdminStats, useAllUsers, useAllFiles } from "@/hooks/useStatistics"
 import { formatFileSize } from "@/lib/utils"
 import Breadcrumb from "@/components/ui/Breadcrumb"
@@ -55,18 +55,10 @@ export default function AdminPanel() {
       <Breadcrumb items={[{ label: "Admin Panel" }]} />
 
       {/* Admin Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard title="Total Users" value={stats.totalUsers} icon={<Users className="w-6 h-6" />} />
 
         <StatCard title="Total Files" value={stats.totalFiles} icon={<FileText className="w-6 h-6" />} />
-
-        <StatCard
-          title="Total Storage"
-          value={formatFileSize(stats.totalStorage)}
-          icon={<HardDrive className="w-6 h-6" />}
-        />
-
-        <StatCard title="Storage Savings" value={`${stats.totalSavings}%`} icon={<TrendingUp className="w-6 h-6" />} />
 
         <StatCard title="Public Files" value={stats.totalPublicFiles} icon={<Globe className="w-6 h-6" />} />
 
@@ -87,10 +79,7 @@ export default function AdminPanel() {
               <div className="text-sm text-gray-500">Manage user accounts and permissions</div>
             </button>
 
-            <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="font-medium text-gray-900">Storage Quotas</div>
-              <div className="text-sm text-gray-500">Set and manage user storage limits</div>
-            </button>
+           
           </div>
         </div>
 
@@ -106,10 +95,7 @@ export default function AdminPanel() {
               <div className="text-sm text-gray-500">Browse and manage all user files</div>
             </button>
 
-            <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="font-medium text-gray-900">File Reports</div>
-              <div className="text-sm text-gray-500">Generate usage and activity reports</div>
-            </button>
+         
           </div>
         </div>
       </div>

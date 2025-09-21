@@ -31,9 +31,10 @@ RUN apk --no-cache add ca-certificates curl postgresql-client && \
 
 WORKDIR /root/
 
-# Copy the binary, migrations, startup script and .env file from builder stage
+# Copy the binary, migrations, public directory and .env file from builder stage
 COPY --from=builder /app/backend .
 COPY --from=builder /app/internal/migrations ./internal/migrations
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/.env ./.env
 
 # Health check
@@ -44,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 EXPOSE 8080
 
 # Run the application with inline migration and startup
-CMD ["/bin/sh", "-c", "echo '🔄 Starting Balkan Drive Backend...' && echo '⏳ Waiting for database to be ready...' && while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do echo '   Database not ready, waiting...' && sleep 2; done && echo '✅ Database is ready!' && echo '🔍 Checking migration status...' && DB_URL=\"postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=$DB_SSLMODE\" && CURRENT_VERSION=$(migrate -path ./internal/migrations -database \"$DB_URL\" version 2>/dev/null || echo 'none') && echo \"📊 Current migration version: $CURRENT_VERSION\" && if echo \"$CURRENT_VERSION\" | grep -q 'dirty'; then echo '🚨 Database is in dirty state, fixing...' && DIRTY_VERSION=$(echo \"$CURRENT_VERSION\" | grep -o '[0-9]*' | head -1) && echo \"   Forcing version to: $DIRTY_VERSION\" && migrate -path ./internal/migrations -database \"$DB_URL\" force $DIRTY_VERSION && echo '✅ Database state cleaned'; fi && echo '🚀 Running database migrations...' && migrate -path ./internal/migrations -database \"$DB_URL\" up && echo '✅ Migrations completed successfully' && echo '🎯 Starting application server...' && exec ./backend"]
+CMD ["/bin/sh", "-c", "echo 'Starting Balkan Drive Backend...' && echo ' Waiting for database to be ready...' && while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do echo '   Database not ready, waiting...' && sleep 2; done && echo '✅ Database is ready!' && echo '🔍 Checking migration status...' && DB_URL=\"postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=$DB_SSLMODE\" && CURRENT_VERSION=$(migrate -path ./internal/migrations -database \"$DB_URL\" version 2>/dev/null || echo 'none') && echo \"📊 Current migration version: $CURRENT_VERSION\" && if echo \"$CURRENT_VERSION\" | grep -q 'dirty'; then echo '🚨 Database is in dirty state, fixing...' && DIRTY_VERSION=$(echo \"$CURRENT_VERSION\" | grep -o '[0-9]*' | head -1) && echo \"   Forcing version to: $DIRTY_VERSION\" && migrate -path ./internal/migrations -database \"$DB_URL\" force $DIRTY_VERSION && echo '✅ Database state cleaned'; fi && echo '🚀 Running database migrations...' && migrate -path ./internal/migrations -database \"$DB_URL\" up && echo '✅ Migrations completed successfully' && echo '🎯 Starting application server...' && exec ./backend"]

@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	jwt "github.com/golang-jwt/jwt/v5"
 	pgx "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/rival231/Balkan_Drive/graph/model"
 	"github.com/rival231/Balkan_Drive/internal/config"
 	"github.com/rival231/Balkan_Drive/internal/middleware"
@@ -63,6 +64,17 @@ func (r *mutationResolver) Register(ctx context.Context, username string, email 
 		"INSERT INTO users (username, email, password, role, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, username, email, role",
 		username, email, string(hashedPassword), role).Scan(&user.ID, &user.Username, &user.Email, &user.Role)
 	if err != nil {
+		// Check for unique constraint violations
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			if pgErr.Code == "23505" { // unique_violation
+				if strings.Contains(pgErr.Detail, "username") {
+					return nil, fmt.Errorf("username already exists")
+				}
+				if strings.Contains(pgErr.Detail, "email") {
+					return nil, fmt.Errorf("email already exists")
+				}
+			}
+		}
 		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
 
@@ -2092,8 +2104,25 @@ func (r *queryResolver) GetAdminStatistics(ctx context.Context) (*model.AdminSta
 		return nil, fmt.Errorf("failed to get storage usage: %v", err)
 	}
 
-	// Calculate storage savings (simplified calculation)
-	totalSavings := 15 // Placeholder percentage
+	// Calculate storage savings from deduplication
+	// Compare total logical size vs actual unique storage size
+	var actualStorageUsed int
+	err = r.DB.QueryRow(ctx, `
+		SELECT COALESCE(SUM(filesize), 0) 
+		FROM (
+			SELECT DISTINCT ON (filehash) filesize 
+			FROM files 
+			WHERE filehash IS NOT NULL
+		) unique_files`).Scan(&actualStorageUsed)
+	if err != nil {
+		// If query fails, assume no deduplication savings
+		actualStorageUsed = totalStorage
+	}
+	
+	totalSavings := totalStorage - actualStorageUsed
+	if totalSavings < 0 {
+		totalSavings = 0
+	}
 
 	// Get total public files
 	var totalPublicFiles int
@@ -2111,14 +2140,14 @@ func (r *queryResolver) GetAdminStatistics(ctx context.Context) (*model.AdminSta
 
 	// Get top downloaded files
 	topFilesRows, err := r.DB.Query(ctx,
-		`SELECT f.id, f.filename, f.public_share_enabled_at, f.owner_id,
+		`SELECT f.id, f.filename, f.public_share_enabled_at,
 				u.id, u.username, u.email, u.role,
 				COUNT(fd.id) as download_count
 		 FROM files f
 		 JOIN users u ON f.owner_id = u.id
 		 LEFT JOIN file_downloads fd ON f.id = fd.file_id
 		 WHERE f.is_public_shared = TRUE
-		 GROUP BY f.id, f.filename, f.public_share_enabled_at, f.owner_id, u.id, u.username, u.email, u.role
+		 GROUP BY f.id, f.filename, f.public_share_enabled_at, u.id, u.username, u.email, u.role
 		 ORDER BY download_count DESC
 		 LIMIT 5`)
 	if err != nil {
@@ -2130,12 +2159,12 @@ func (r *queryResolver) GetAdminStatistics(ctx context.Context) (*model.AdminSta
 	for topFilesRows.Next() {
 		var fileStats model.PublicFileStats
 		var owner model.User
-		var publicSharedAt time.Time
+		var publicSharedAt *time.Time
 		var downloadCount int
 
 		err := topFilesRows.Scan(
 			&fileStats.ID, &fileStats.Filename, &publicSharedAt,
-			&owner.ID, &owner.ID, &owner.Username, &owner.Email, &owner.Role,
+			&owner.ID, &owner.Username, &owner.Email, &owner.Role,
 			&downloadCount,
 		)
 		if err != nil {
@@ -2143,6 +2172,11 @@ func (r *queryResolver) GetAdminStatistics(ctx context.Context) (*model.AdminSta
 		}
 
 		fileStats.DownloadCount = int32(downloadCount)
+		fileStats.Owner = &owner
+		
+		if publicSharedAt != nil {
+			fileStats.PublicSharedAt = publicSharedAt.Format(time.RFC3339)
+		}
 
 		topDownloadedFiles = append(topDownloadedFiles, &fileStats)
 	}

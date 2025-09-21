@@ -53,7 +53,7 @@ docker-compose up -d
 ### Manual Verification
 ```bash
 # Check service status
-docker-compose ps
+docker compose ps
 
 # Test individual services
 curl http://localhost:8080/health           # Backend health

@@ -234,8 +234,6 @@ files (1) ←→ (N) file_downloads
 **Frontend:** React, TypeScript, Apollo Client, TailwindCSS, Vite  
 **Documentation:** SpectaQL, OpenAPI 3.0, Postman Collections, GoDoc  
 **DevOps:** Docker, Docker Compose 
-
-
 ---
 
 All documentation artifacts are located in the [`docs/`](docs/) directory and linked throughout this README.

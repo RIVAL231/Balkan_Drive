@@ -1,7 +1,7 @@
 "use client"
 
 import { NavLink } from "react-router-dom"
-import { Folder, Share2, Globe, BarChart3, Shield, Activity, X } from "lucide-react"
+import { Folder, Share2, Globe, BarChart3, Shield, X } from "lucide-react"
 import { useAuth } from "@/hooks/auth"
 import { cn } from "@/lib/utils"
 
@@ -63,7 +63,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             </NavLink>
           ))}
           
-          {user?.role === "admin" && (
+          {/* {user?.role === "admin" && (
             <NavLink
               to="/audit"
               onClick={() => onClose?.()}
@@ -77,7 +77,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               <Activity className="w-5 h-5 flex-shrink-0" />
               <span className="truncate">My Activity</span>
             </NavLink>
-          )}
+          )} */}
 
           {user?.role === "admin" && (
             <NavLink
