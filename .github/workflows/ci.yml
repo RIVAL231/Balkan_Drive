@@ -8,7 +8,7 @@ on:
 
 env:
   # Docker Compose environment variables
-  DB_HOST: postgres
+  DB_HOST: database
   DB_PORT: 5432
   DB_USER: admin
   DB_PASSWORD: admin
@@ -38,7 +38,7 @@ jobs:
     - name: Create test environment file
       run: |
         cat > .env << EOF
-        DB_HOST=postgres
+        DB_HOST=database
         DB_PORT=5432
         DB_USER=admin
         DB_PASSWORD=admin
@@ -237,15 +237,15 @@ jobs:
       run: |
         echo "📋 Container logs for debugging:"
         echo "=== Backend logs ==="
-        docker compose logs backend
+        docker-compose logs backend
         echo "=== Frontend logs ==="
-        docker compose logs frontend
+        docker-compose logs frontend
         echo "=== Database logs ==="
-        docker compose logs database
+        docker-compose logs postgres
 
     - name: Cleanup
       if: always()
       run: |
         echo "🧹 Cleaning up..."
-        docker compose down -v
+        docker-compose down -v
         docker system prune -f

@@ -137,22 +137,22 @@ DEFAULT_STORAGE_QUOTA=104857600
 **Services not starting:**
 ```bash
 # Check container logs
-docker-compose logs backend
-docker-compose logs frontend  
-docker-compose logs postgres
+docker compose logs backend
+docker compose logs frontend
+docker compose logs database
 
 # Restart services
-docker-compose down
-docker-compose up -d --build
+docker compose down
+docker compose up -d --build
 ```
 
 **Database connection issues:**
 ```bash
 # Verify PostgreSQL is ready
-docker-compose exec postgres pg_isready -h localhost -U admin
+docker compose exec database pg_isready -h localhost -U admin
 
 # Check database exists
-docker-compose exec postgres psql -U admin -l
+docker compose exec database psql -U admin -l
 ```
 
 **Port conflicts:**
