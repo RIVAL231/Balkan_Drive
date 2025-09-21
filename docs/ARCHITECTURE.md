@@ -23,7 +23,7 @@ Balkan Drive is a secure, scalable file storage system built with modern web tec
 
 ### Technology Stack
 
-**Frontend (React SPA)**
+**Frontend (React.js)**
 - **Framework**: React 18 with TypeScript
 - **State Management**: Apollo Client with InMemoryCache
 - **Routing**: React Router DOM
@@ -36,7 +36,7 @@ Balkan Drive is a secure, scalable file storage system built with modern web tec
 - **GraphQL**: gqlgen for schema-first development
 - **Database**: PostgreSQL with pgx/v5 driver
 - **Authentication**: JWT with RS256 signing
-- **Storage**: AWS S3 compatible blob storage
+- **Storage**: AWS S3
 - **Middleware**: Rate limiting, authentication, CORS, audit logging
 
 **Infrastructure**
@@ -97,9 +97,6 @@ CREATE TABLE folders (
 3. **Public Sharing**: Share with all users, the file is available to all users of the system.
 
 **Security Features**:
-- Time-based expiration for shares
-- Granular permissions (READ/WRITE)
-- IP-based access logging
 - Revocation capabilities
 
 ### 4. Comprehensive Audit Logging
@@ -174,7 +171,6 @@ type AuditLog struct {
 - File ownership verification
 - Share permission checking
 - Download activity logging
-- Pre-signed URL expiration
 
 ### 3. Search and Discovery
 
@@ -215,20 +211,17 @@ type Claims struct {
 1. **Rate Limiting**: Token bucket algorithm per user/IP
 2. **Input Validation**: GraphQL schema validation + custom rules
 3. **SQL Injection Prevention**: Parameterized queries with pgx
-4. **XSS Protection**: Content-Type enforcement, CSP headers
+
 
 
 ### 3. Data Protection
 
 **Encryption at Rest and in Transit**:
-- S3 server-side encryption (AES-256)
 - JWT signing with RS256 (asymmetric keys)
 - Password hashing with bcrypt (cost factor 12)
 
 **Privacy Controls**:
 - Data minimization in audit logs
-- User-controlled data retention
-
 
 ## Performance Architecture
 
@@ -292,35 +285,7 @@ services:
 - OpenAPI specification for API contracts
 - Architecture decision records (ADRs)
 
-### 2. Testing Strategy
 
-**Backend Testing**:
-```go
-// Unit tests with testify
-func TestContentDeduplication(t *testing.T) {
-    // Test SHA256 deduplication logic
-}
-
-// Integration tests with dockertest
-func TestFileUploadFlow(t *testing.T) {
-    // End-to-end upload scenario
-}
-```
-
-**Frontend Testing**:
-```typescript
-// Component testing with React Testing Library
-describe('FileCard', () => {
-  it('should display file metadata correctly', () => {
-    // Component rendering tests
-  });
-});
-
-// E2E testing with Playwright
-test('file upload workflow', async ({ page }) => {
-  // Full user journey testing
-});
-```
 
 ## Business Logic & Domain Model
 
@@ -388,11 +353,6 @@ type File struct {
 - Branch and merge capabilities for collaborative editing
 - Diff visualization for text-based files
 
-**Advanced Search**:
-- Full-text content indexing with Elasticsearch
-- AI-powered semantic search
-- OCR for scanned documents
-
 **Collaboration**:
 - Real-time collaborative editing
 - Comment and annotation systems
@@ -405,17 +365,7 @@ type File struct {
 - Caching layer with Redis Cluster
 - Background job processing with message queues
 
-**Enterprise Features**:
-- Single Sign-On (SSO) integration
-- Advanced compliance reporting
-- Data loss prevention (DLP) scanning
-- Custom branding and theming
-
 ## Conclusion
 
 Balkan Drive implements a modern, secure, and scalable file storage architecture that addresses key challenges in enterprise data management:
 
-1. **Storage Efficiency**: Content deduplication reduces costs by 60-80%
-2. **Security**: Multi-layered protection with comprehensive audit trails
-3. **Usability**: Intuitive interface with powerful sharing capabilities
-4. **Compliance**: Enterprise-grade audit logging and data protection

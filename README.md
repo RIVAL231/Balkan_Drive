@@ -32,10 +32,10 @@ docker compose up
 **🏗️ Architecture & Design**
 - **System Architecture**: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - **Database Schema**: Detailed ER diagrams and relationships (see below)
-- **Design Decisions**: Content-addressed storage, security model, scalability
+- **Design Decisions**: Content-addressed storage, security model.
 
 **💻 Code Documentation**
-- **Backend**: Comprehensive GoDoc comments for all public functions
+- **Backend**: Comprehensive GoDoc comments for all functions
 - **Frontend**: TypeScript interfaces and JSDoc for complex functions
 - **GraphQL Schema**: [`backend/graph/schema.graphqls`](backend/graph/schema.graphqls)
 
@@ -58,7 +58,7 @@ go run server.go
 **Frontend:**
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 **Database:**
@@ -182,7 +182,7 @@ files (1) ←→ (N) file_downloads
 
 **Soft References**: `files.filehash` → `content.sha256` with reference counting for safe cleanup.
 
-**Comprehensive Auditing**: All user actions logged with structured details for compliance.
+**Comprehensive Auditing**: All user actions logged with structured details for compliance, which can be monitored via the admin login, for testing the user is given the choice to create account as an admin as well, in practice an admin account will be created by the system administrator.
 
 **Performance Indexes**: Optimized for common queries (user files, folder contents, public files).
 
@@ -210,7 +210,7 @@ files (1) ←→ (N) file_downloads
 
 - **API Layer**: GraphQL server with `gqlgen`
 - **Database**: PostgreSQL with content deduplication
-- **Storage**: S3-compatible blob storage
+- **Storage**: AWS S3
 - **Frontend**: React with Apollo GraphQL client
 - **Security**: JWT authentication with middleware
 
@@ -230,11 +230,11 @@ files (1) ←→ (N) file_downloads
 
 ## Tech Stack
 
-**Backend:** Go, GraphQL (gqlgen), PostgreSQL, AWS S3, JWT Authentication  
+**Backend:** Go, GraphQL (gqlgen), PostgreSQL, AWS S3  
 **Frontend:** React, TypeScript, Apollo Client, TailwindCSS, Vite  
 **Documentation:** SpectaQL, OpenAPI 3.0, Postman Collections, GoDoc  
-**DevOps:** Docker, Docker Compose, GitHub Actions  
-**Tools:** ESLint, Prettier, golangci-lint
+**DevOps:** Docker, Docker Compose 
+
 
 ---
 
