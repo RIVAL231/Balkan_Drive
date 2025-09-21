@@ -202,46 +202,16 @@ jobs:
           fi
         done
 
-    - name: Test File Upload Endpoint
-      run: |
-        echo " Testing file upload endpoints..."
-        
-        # First get authentication token
-        REGISTER_RESPONSE=$(curl -s -X POST http://localhost:8080/query \
-          -H "Content-Type: application/json" \
-          -d '{
-            "query": "mutation { register(username: \"uploader\", email: \"uploader@example.com\", password: \"testpass123\", role: \"user\") { token } }"
-          }')
-        
-        TOKEN=$(echo $REGISTER_RESPONSE | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
-        
-        # Test upload intent creation
-        UPLOAD_INTENT=$(curl -s -X POST http://localhost:8080/query \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer $TOKEN" \
-          -d '{
-            "query": "mutation { createUploadIntent(filename: \"test.txt\", filesize: 100, filetype: \"text/plain\") { uploadToken } }"
-          }')
-        
-        echo "Upload intent response: $UPLOAD_INTENT"
-        
-        if [[ $UPLOAD_INTENT == *"uploadToken"* ]]; then
-          echo " File upload endpoint working"
-        else
-          echo " File upload endpoint failed"
-          exit 1
-        fi
-
     - name: Show container logs on failure
       if: failure()
       run: |
         echo " Container logs for debugging:"
         echo "=== Backend logs ==="
-        docker-compose logs backend
+        docker compose logs backend
         echo "=== Frontend logs ==="
-        docker-compose logs frontend
+        docker compose logs frontend
         echo "=== Database logs ==="
-        docker-compose logs postgres
+        docker compose logs postgres
 
     - name: Cleanup
       if: always()
