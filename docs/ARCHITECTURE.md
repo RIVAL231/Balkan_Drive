@@ -84,8 +84,6 @@ CREATE TABLE folders (
 
 **Features**:
 - Unlimited nesting depth
-- Efficient tree traversal with recursive CTEs
-- Path resolution caching for performance
 - Atomic move operations
 
 ### 3. Secure File Sharing
