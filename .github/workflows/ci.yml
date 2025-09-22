@@ -2,9 +2,9 @@ name: CI Pipeline - Full Stack Integration Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 env:
   # Docker Compose environment variables
