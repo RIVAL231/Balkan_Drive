@@ -339,7 +339,7 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
             }
           </h3>
           <p className="text-sm text-gray-500 mb-2 px-2">
-            Support for single and multiple files • Maximum file size: 100MB
+            Support for single and multiple files • Maximum file size: 10MB
           </p>
           {!storageLoading && (
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4 mb-3 sm:mb-4">
