@@ -50,6 +50,13 @@ interface FileCardProps {
   onMoveToFolder?: (fileId: string) => void
   /** Callback for showing file download statistics */
   onShowStats?: (fileId: string, fileName: string) => void
+  /** Callback for previewing the file */
+  onPreview?: (file: {
+    id: string
+    filename: string
+    filetype: string
+    filesize: number
+  }) => void
 }
 
 /**
@@ -77,7 +84,7 @@ interface FileCardProps {
  * />
  * ```
  */
-function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onMoveToFolder, onShowStats }: FileCardProps) {
+function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onMoveToFolder, onShowStats, onPreview }: FileCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number }>({
     show: false,
@@ -114,6 +121,9 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
     setShowMenu(false)
 
     switch (action) {
+      case "preview":
+        onPreview?.(file)
+        break
       case "download":
         onDownload?.()
         break
@@ -134,7 +144,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
         onShowStats?.(file.id, file.filename)
         break
     }
-  }, [file.id, file.filename, file.isPublicShared, onDownload, onShare, onDelete, onToggleVisibility, onMoveToFolder, onShowStats])
+  }, [file, onPreview, onDownload, onShare, onDelete, onToggleVisibility, onMoveToFolder, onShowStats])
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -150,6 +160,12 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
   }, [])
 
   const contextMenuItems = [
+    {
+      id: "preview",
+      label: "Preview",
+      icon: <Eye className="w-4 h-4" />,
+      onClick: () => handleMenuAction("preview"),
+    },
     {
       id: "download",
       label: "Download",
@@ -269,6 +285,14 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
               className="fixed w-64 sm:w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
               style={{ left: menuPosition.x, top: menuPosition.y }}
             >
+              <button
+                onClick={() => handleMenuAction("preview")}
+                className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Preview</span>
+              </button>
+
               <button
                 onClick={() => handleMenuAction("download")}
                 className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"

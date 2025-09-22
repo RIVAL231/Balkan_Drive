@@ -17,6 +17,7 @@ import RenameFolderModal from "@/components/files/RenameFolderModal"
 import ShareByUsernameModal from "@/components/files/ShareByUsernameModal"
 import MoveToFolderModal from "@/components/files/MoveToFolderModal"
 import FileDownloadStatsModal from "@/components/files/FileDownloadStatsModal"
+import FilePreviewModal from "@/components/files/FilePreviewModal"
 import LoadingSpinner from "@/components/ui/LoadingSpinner"
 import ContextMenu from "@/components/ui/ContextMenu"
 
@@ -102,6 +103,15 @@ export default function MyFiles() {
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false)
   const [fileToShare, setFileToShare] = useState<{id: string, name: string} | null>(null)
+  
+  // Preview modal state
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [fileToPreview, setFileToPreview] = useState<{
+    id: string
+    filename: string
+    filetype: string
+    filesize: number
+  } | null>(null)
   
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
@@ -213,6 +223,16 @@ export default function MyFiles() {
   const handleShowShareModal = (fileId: string, fileName: string) => {
     setFileToShare({ id: fileId, name: fileName })
     setShowShareModal(true)
+  }
+
+  const handleShowPreviewModal = (file: {
+    id: string
+    filename: string
+    filetype: string
+    filesize: number
+  }) => {
+    setFileToPreview(file)
+    setShowPreviewModal(true)
   }
 
   const handleShareFile = async (username: string, permission: string) => {
@@ -746,6 +766,7 @@ export default function MyFiles() {
                     onToggleVisibility={handleToggleVisibility}
                     onMoveToFolder={handleShowMoveModal}
                     onShowStats={(fileId) => handleShowStatsModal(fileId, file.filename)}
+                    onPreview={handleShowPreviewModal}
                   />
                 </div>
               ))}
@@ -820,6 +841,16 @@ export default function MyFiles() {
         }}
         onShare={handleShareFile}
         fileName={fileToShare?.name || ""}
+      />
+
+      {/* File Preview Modal */}
+      <FilePreviewModal
+        file={fileToPreview}
+        isOpen={showPreviewModal}
+        onClose={() => {
+          setShowPreviewModal(false)
+          setFileToPreview(null)
+        }}
       />
 
       {/* Alert and Confirm Modals */}

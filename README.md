@@ -193,26 +193,39 @@ files (1) ←→ (N) file_downloads
 - JWT-based authentication
 - Role-based access control (Admin/User)
 - Rate limiting and audit logging
-- Secure file sharing with expiration
 
 ### File Management
 - Upload/download with deduplication
 - Folder organization with nesting
 - Public and private file sharing
 - Download analytics and statistics
+- Select and upload multiple files
+- Drag and drop to upload files in the upload zone.
+- Progress bar for uploads. 
+
+### File Deduplication
+- Content-addressed storage using SHA256 hashes
+- Reference counting for efficient storage management
 
 ### Admin Panel
 - Logs for file uploads, downloads, deletions.
 - Number of files, total downloads, top downloaded, number of public files, recent downloads.
 - User management (view users in the system).
 
-
+### Search and Filtering
+- Search files by name, type, owner.
+- Filter by date range, size, file type (Image, Video, Document, Audio, Archive, Text Files)
 
 ### API Features
 - GraphQL with real-time queries
 - File upload via multipart forms
 - Search and filtering capabilities
 - Comprehensive audit trails
+
+### Storage Statistics
+- Total storage used (Deduplicated)
+- Original storage used (Non-deduplicated)
+- Storage savings in bytes and percentage
 
 ## Architecture
 
