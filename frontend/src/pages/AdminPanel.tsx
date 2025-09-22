@@ -14,7 +14,6 @@ import { useState } from "react"
  * - System-wide statistics dashboard with key metrics
  * - User management with expandable user list
  * - File management with detailed file information
- * - Storage analytics and deduplication savings
  * - Public sharing and download statistics
  * - Top downloaded files tracking
  * - Recent download activity monitoring
@@ -113,13 +112,13 @@ export default function AdminPanel() {
           {stats.topDownloadedFiles.map((file) => (
             <div
               key={file.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg min-w-0"
             >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
-                <p className="text-xs text-gray-500">by {file.owner.username}</p>
+              <div className="flex-1 min-w-0 mr-3">
+                <p className="text-sm font-medium text-gray-900 break-words">{file.filename}</p>
+                <p className="text-xs text-gray-500 break-words">by {file.owner.username}</p>
               </div>
-              <div className="flex items-center space-x-2 ml-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 <Download className="w-4 h-4 text-gray-400" />
                 <span className="text-sm font-medium text-gray-900">{file.downloadCount}</span>
               </div>
@@ -146,17 +145,17 @@ export default function AdminPanel() {
           {stats.recentDownloads.map((download) => (
             <div
               key={download.id}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg min-w-0"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 break-words">
                   {download.downloadedBy ? download.downloadedBy.username : "Anonymous"}
                 </p>
                 <p className="text-xs text-gray-500">
                   {new Date(download.downloadedAt).toLocaleString()}
                 </p>
               </div>
-              <div className="text-xs text-gray-400 mt-1 sm:mt-0 sm:ml-2">
+              <div className="text-xs text-gray-400 mt-1 sm:mt-0 sm:ml-2 sm:flex-shrink-0 break-all">
                 {download.ipAddress || "Unknown IP"}
               </div>
             </div>
@@ -182,7 +181,7 @@ export default function AdminPanel() {
       </div>
       <button
         onClick={() => setExpandedFiles(false)}
-        className="text-gray-400 hover:text-gray-600"
+        className="text-gray-400 hover:text-gray-600 flex-shrink-0"
       >
         <X className="w-5 h-5" />
       </button>
@@ -198,37 +197,41 @@ export default function AdminPanel() {
       <table className="min-w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200">
-            <th className="text-left py-3 px-4 font-medium text-gray-900">File Name</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-900">Size</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-900">Uploader</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-            <th className="text-left py-3 px-4 font-medium text-gray-900">Uploaded</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-900 min-w-0 w-1/4">File Name</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Type</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Size</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-900 min-w-0 w-1/4">Uploader</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Status</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Uploaded</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {files.length > 0 ? (
             files.map((file) => (
               <tr key={file.id} className="hover:bg-gray-50">
-                <td className="py-3 px-4">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {file.filename}
-                  </p>
-                  {file.folder && (
-                    <p className="text-xs text-gray-500">in {file.folder.name}</p>
-                  )}
+                <td className="py-3 px-4 min-w-0 max-w-0">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 break-words">
+                      {file.filename}
+                    </p>
+                    {file.folder && (
+                      <p className="text-xs text-gray-500 break-words">in {file.folder.name}</p>
+                    )}
+                  </div>
                 </td>
-                <td className="py-3 px-4">{file.filetype}</td>
-                <td className="py-3 px-4">{formatFileSize(file.filesize)}</td>
-                <td className="py-3 px-4">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {file.owner.username}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {file.owner.email}
-                  </p>
+                <td className="py-3 px-4 whitespace-nowrap">{file.filetype}</td>
+                <td className="py-3 px-4 whitespace-nowrap">{formatFileSize(file.filesize)}</td>
+                <td className="py-3 px-4 min-w-0 max-w-0">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 break-words">
+                      {file.owner.username}
+                    </p>
+                    <p className="text-xs text-gray-500 break-all">
+                      {file.owner.email}
+                    </p>
+                  </div>
                 </td>
-                <td className="py-3 px-4">
+                <td className="py-3 px-4 whitespace-nowrap">
                   {file.isPublicShared ? (
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       Public
@@ -243,7 +246,7 @@ export default function AdminPanel() {
                     </span>
                   )}
                 </td>
-                <td className="py-3 px-4 text-gray-500">
+                <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
                   {new Date(file.createdAt).toLocaleDateString()}
                 </td>
               </tr>
@@ -268,28 +271,30 @@ export default function AdminPanel() {
             key={file.id}
             className="border rounded-lg p-3 bg-white shadow-sm"
           >
-            <p className="font-medium text-gray-900 truncate">{file.filename}</p>
+            <p className="font-medium text-gray-900 break-words mb-1">{file.filename}</p>
             {file.folder && (
-              <p className="text-xs text-gray-500 mb-1">in {file.folder.name}</p>
+              <p className="text-xs text-gray-500 mb-2 break-words">in {file.folder.name}</p>
             )}
-            <p className="text-xs text-gray-500">Type: {file.filetype}</p>
-            <p className="text-xs text-gray-500">
-              Size: {formatFileSize(file.filesize)}
-            </p>
-            <p className="text-xs text-gray-500">
-              Uploader: {file.owner.username} ({file.owner.email})
-            </p>
-            <p className="text-xs text-gray-500">
-              Status:{" "}
-              {file.isPublicShared
-                ? "Public"
-                : file.isPublic
-                ? "Legacy Public"
-                : "Private"}
-            </p>
-            <p className="text-xs text-gray-500">
-              Uploaded: {new Date(file.createdAt).toLocaleDateString()}
-            </p>
+            <div className="space-y-1 text-xs text-gray-500">
+              <p>Type: {file.filetype}</p>
+              <p>Size: {formatFileSize(file.filesize)}</p>
+              <div>
+                <span>Uploader: </span>
+                <span className="break-words">{file.owner.username}</span>
+                <span className="text-gray-400"> (</span>
+                <span className="break-all">{file.owner.email}</span>
+                <span className="text-gray-400">)</span>
+              </div>
+              <p>
+                Status:{" "}
+                {file.isPublicShared
+                  ? "Public"
+                  : file.isPublic
+                  ? "Legacy Public"
+                  : "Private"}
+              </p>
+              <p>Uploaded: {new Date(file.createdAt).toLocaleDateString()}</p>
+            </div>
           </div>
         ))
       ) : (
@@ -306,24 +311,33 @@ export default function AdminPanel() {
   {/* User Management */}
   {expandedUsers && (
     <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">All Users</h3>
-        <button onClick={() => setExpandedUsers(false)} className="text-gray-400 hover:text-gray-600">
+      <div className="flex items-center justify-between mb-4 min-w-0">
+        <h3 className="text-lg font-semibold text-gray-900 truncate">All Users</h3>
+        <button onClick={() => setExpandedUsers(false)} className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-3">
           <X className="w-5 h-5" />
         </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {users.map((user) => (
-          <div key={user.id} className="p-3 rounded-lg bg-gray-50">
-            <p className="font-medium text-gray-900 truncate">
-              <span className="font-bold">Username:</span> {user.username}
-            </p>
-            <p className="text-sm text-gray-500 truncate">
-              <span className="font-bold">Email:</span> {user.email}
-            </p>
-            <p className="text-sm text-gray-500">
-              <span className="font-bold">Role:</span> {user.role}
-            </p>
+          <div key={user.id} className="p-3 rounded-lg bg-gray-50 min-w-0">
+            <div className="space-y-1">
+              <div className="min-w-0">
+                <span className="font-bold text-sm">Username:</span>
+                <p className="font-medium text-gray-900 break-words mt-0.5">
+                  {user.username}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <span className="font-bold text-sm text-gray-500">Email:</span>
+                <p className="text-sm text-gray-500 break-all mt-0.5">
+                  {user.email}
+                </p>
+              </div>
+              <div>
+                <span className="font-bold text-sm text-gray-500">Role:</span>
+                <span className="text-sm text-gray-500 ml-1">{user.role}</span>
+              </div>
+            </div>
           </div>
         ))}
       </div>

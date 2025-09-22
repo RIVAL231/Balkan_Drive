@@ -177,7 +177,7 @@ export default function AuditLogs({ isAdmin = false, userId }: AuditLogsProps) {
 
                   {/* Resource name */}
                   {log.resourceName && (
-                    <div className="text-sm text-gray-700 font-medium truncate">
+                    <div className="text-sm text-gray-700 font-medium break-words">
                       {log.resourceName}
                     </div>
                   )}
@@ -185,11 +185,12 @@ export default function AuditLogs({ isAdmin = false, userId }: AuditLogsProps) {
                   {/* User info and details */}
                   <div className="space-y-2">
                     {isAdmin && log.user && (
-                      <div className="flex items-center space-x-1 text-xs text-gray-600">
-                        <User className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate">
-                          {log.user.username} ({log.user.email})
-                        </span>
+                      <div className="flex items-start space-x-1 text-xs text-gray-600 min-w-0">
+                        <User className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0 break-words">
+                          <div className="break-words">{log.user.username}</div>
+                          <div className="break-all">({log.user.email})</div>
+                        </div>
                       </div>
                     )}
 
@@ -224,7 +225,7 @@ export default function AuditLogs({ isAdmin = false, userId }: AuditLogsProps) {
                           {getActionLabel(log.action)}
                         </span>
                         {log.resourceName && (
-                          <span className="text-gray-600 truncate">
+                          <span className="text-gray-600 break-words">
                             • {log.resourceName}
                           </span>
                         )}
@@ -232,11 +233,18 @@ export default function AuditLogs({ isAdmin = false, userId }: AuditLogsProps) {
 
                       <div className="text-sm text-gray-600 space-y-1">
                         {isAdmin && log.user && (
-                          <div className="flex items-center gap-1 min-w-0">
-                            <User className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">
-                              {log.user.username} ({log.user.email})
-                            </span>
+                          <div className="flex items-start gap-1 min-w-0">
+                            <User className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <span className="break-words">
+                                {log.user.username}
+                              </span>
+                              <span className="text-gray-500"> (</span>
+                              <span className="break-all">
+                                {log.user.email}
+                              </span>
+                              <span className="text-gray-500">)</span>
+                            </div>
                           </div>
                         )}
 
