@@ -52,6 +52,7 @@ docker compose up
 **Backend:**
 ```powershell
 cd backend
+go mod download
 go run server.go
 ```
 
