@@ -576,7 +576,7 @@ export default function MyFiles() {
           </Button>
         </div>
 
-        <div className="hidden md:flex flex items-center space-x-2">
+        <div className="hidden md:flex items-center space-x-2">
           <button
             onClick={() => setViewMode("grid")}
             className={`p-2 rounded-lg transition-colors ${

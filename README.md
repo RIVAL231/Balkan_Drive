@@ -200,6 +200,13 @@ files (1) ←→ (N) file_downloads
 - Public and private file sharing
 - Download analytics and statistics
 
+### Admin Panel
+- Logs for file uploads, downloads, deletions.
+- Number of files, total downloads, top downloaded, number of public files, recent downloads.
+- User management (view users in the system).
+
+
+
 ### API Features
 - GraphQL with real-time queries
 - File upload via multipart forms

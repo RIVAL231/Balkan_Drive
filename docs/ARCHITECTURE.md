@@ -10,7 +10,7 @@ Balkan Drive is a secure, scalable file storage system built with modern web tec
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React SPA     │    │   Go Backend    │    │   PostgreSQL    │
+│   React js      │    │   Go Backend    │    │   PostgreSQL    │
 │   (Frontend)    │◄──►│   (GraphQL)     │◄──►│   (Database)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                                 │
@@ -136,7 +136,7 @@ type AuditLog struct {
     │
     └─ File selection
        Metadata extraction
-       Preview generation
+      
 ```
 
 **Key Components**:
@@ -163,7 +163,7 @@ type AuditLog struct {
 [Client Request] → [Authentication] → [Authorization] → [S3 Pre-signed URL] → [Direct Download]
                         │                   │                    │
                         ├─ JWT validation   ├─ Permission check  └─ Time-limited access
-                        └─ User context     └─ Audit logging        (15 minutes)
+                        └─ User context     └─ Audit logging        
 ```
 
 **Security Layers**:
