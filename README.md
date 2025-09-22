@@ -158,7 +158,7 @@ files (1) ←→ (N) file_downloads
 **`file_downloads`** - Download analytics and tracking
 - `id` (UUID, PK) - Unique download record
 - `file_id` (UUID, FK→files.id) - Downloaded file
-- `downloaded_by` (UUID, FK→users.id, NULLABLE) - User (NULL = public)
+- `downloaded_by` (UUID, FK→users.id, NULLABLE) - User
 - `downloaded_at` (TIMESTAMP) - Download timestamp
 - `ip_address` (INET) - Client IP address
 - `user_agent` (TEXT) - Client user agent
