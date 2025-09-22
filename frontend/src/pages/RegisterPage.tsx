@@ -105,8 +105,8 @@ export default function RegisterPage() {
           // If data is null, it means we have a GraphQL error response
           if (parsedError?.data === null && parsedError?.errors && Array.isArray(parsedError.errors)) {
             const gqlMessage = parsedError.errors[0]?.message;
-            console.log("Parsed GraphQL error message:", gqlMessage);
-            console.log("Full parsed error object:", parsedError);
+            // console.log("Parsed GraphQL error message:", gqlMessage);
+            // console.log("Full parsed error object:", parsedError);
             if (gqlMessage) {
               if (gqlMessage.toLowerCase().includes('email already exists') || gqlMessage.toLowerCase().includes('email already taken')) {
                 errorMessage = "This email address is already registered. Please use a different email or try logging in.";

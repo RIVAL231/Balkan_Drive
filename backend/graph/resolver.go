@@ -37,6 +37,7 @@ func (r *Resolver) ConnectDB() error {
 	if err != nil {
 		return fmt.Errorf("unable to connect: %v", err)
 	}
+	fmt.Println("Connected to database!")
 	r.DB = pool
 	r.AuditLogger = audit.NewAuditLogger(pool)
 	return nil

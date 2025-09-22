@@ -358,7 +358,7 @@ const changePassword = async (currentPassword: string, newPassword: string) => {
     });
     if (data?.changePassword?.success) {
       // Handle successful password change (e.g., show a success message)
-      console.log(data.changePassword.message);
+      // console.log(data.changePassword.message);
     } else {
       // Handle failed password change (e.g., show an error message)
       console.error(data?.changePassword?.message || "Failed to change password");

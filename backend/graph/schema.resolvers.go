@@ -1209,7 +1209,7 @@ func (r *queryResolver) ListAllUsers(ctx context.Context) ([]*model.User, error)
 		}
 		users = append(users, &user)
 	}
-	fmt.Println("ListAllUsers called, returning users:", users)
+	// fmt.Println("ListAllUsers called, returning users:", users)
 	return users, nil
 }
 
@@ -2352,7 +2352,7 @@ func (r *queryResolver) GetAuditLogs(ctx context.Context, limit *int32, offset *
 
 	// Check if user is admin
 	if user.Role != "admin" {
-		fmt.Printf("GetAuditLogs: non-admin user trying to access\n")
+		// fmt.Printf("GetAuditLogs: non-admin user trying to access\n")
 		return nil, fmt.Errorf("admin access required")
 	}
 

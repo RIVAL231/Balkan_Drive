@@ -55,7 +55,7 @@ export default function SharedFiles() {
   }
   const userSharedFiles = filterFilesSharedToCurrentUser()
   const currentUserSharedFiles = filterFilesSharedByCurrentUser()
-  console.log("User Shared Files:", userSharedFiles)
+  // console.log("User Shared Files:", userSharedFiles)
   if (userSharedFiles.length === 0 && !loading) {
     return (
       <div>
