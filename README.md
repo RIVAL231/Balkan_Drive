@@ -195,6 +195,12 @@ files (1) ←→ (N) file_downloads
 - Rate limiting and audit logging
 
 ### File Management
+- Click on the three dots in file card to access options like:
+  - Preview
+  - Download
+  - Share
+  - Delete
+  - Move to folder
 - Upload/download with deduplication
 - Folder organization with nesting
 - Public and private file sharing
@@ -253,7 +259,7 @@ files (1) ←→ (N) file_downloads
 
 **Backend:** Go, GraphQL (gqlgen), PostgreSQL, AWS S3  
 **Frontend:** React, TypeScript, Apollo Client, TailwindCSS, Vite  
-**Documentation:** SpectaQL, OpenAPI 3.0, Postman Collections, GoDoc  
+**Documentation:** SpectaQL, OpenAPI 3.0, Postman Collections, GoDoc, JsDoc  
 **DevOps:** Docker, Docker Compose 
 ---
 
