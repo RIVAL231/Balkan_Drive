@@ -218,6 +218,11 @@ files (1) ←→ (N) file_downloads
 - Number of files, total downloads, top downloaded, number of public files, recent downloads.
 - User management (view users in the system).
 
+### Rate Limiting
+- 2 calls per second per user
+- Storage quota of 10MB
+- Error messages when limits are exceeded
+
 ### Search and Filtering
 - Search files by name, type, owner.
 - Filter by date range, size, file type (Image, Video, Document, Audio, Archive, Text Files)
