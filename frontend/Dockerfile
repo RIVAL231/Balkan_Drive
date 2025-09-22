@@ -27,5 +27,5 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Expose port
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start nginx with logging
+CMD ["/bin/sh", "-c", "echo 'Starting Balkan Drive Frontend on port 3001...' && echo 'Frontend is running on http://localhost:3001' & nginx -g 'daemon off;'"]

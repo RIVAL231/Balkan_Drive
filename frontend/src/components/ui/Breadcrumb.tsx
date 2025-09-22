@@ -42,9 +42,9 @@ interface BreadcrumbProps {
  */
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
+    <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
       <Link to="/files" className="hover:text-gray-700 transition-colors">
-        <Home className="w-4 h-4" />
+        <Home className="w-6 h-6 font-bold" />
       </Link>
 
       {items.map((item, index) => (
@@ -55,7 +55,7 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
               {item.label}
             </Link>
           ) : (
-            <span className="text-gray-900 font-medium">{item.label}</span>
+            <span className="text-gray-900 font-semibold text-base">{item.label}</span>
           )}
         </div>
       ))}

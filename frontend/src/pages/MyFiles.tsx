@@ -506,12 +506,12 @@ export default function MyFiles() {
 
   return (
     <div>
-      <div className="flex items-center mb-2">
+      <div className="flex gap-2 mb-2">
         <Button
           variant="outline"
           onClick={handleBack}
           disabled={folderHistory.length === 0}
-          className="mr-2"
+          className="mr-2 mb-2"
         >
           Back
         </Button>
@@ -576,7 +576,7 @@ export default function MyFiles() {
           </Button>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="hidden md:flex flex items-center space-x-2">
           <button
             onClick={() => setViewMode("grid")}
             className={`p-2 rounded-lg transition-colors ${

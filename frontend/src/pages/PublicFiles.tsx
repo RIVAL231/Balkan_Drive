@@ -86,57 +86,67 @@ export default function PublicFiles() {
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {publicFiles.map((file) => (
-              <div key={file.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="text-3xl">{getFileIcon(file.filetype)}</div>
-
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 mb-1">
-                        {file.filename}
-                      </h3>
-                      
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>{formatFileSize(file.filesize)}</span>
-                        <span>•</span>
-                        <div className="flex items-center space-x-1">
-                          <User className="w-3 h-3" />
-                          <span>by {file.owner.username}</span>
-                        </div>
-                        <span>•</span>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{formatRelativeTime(file.publicSharedAt)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                        <div className="flex items-center space-x-1">
-                          <Eye className="w-3 h-3" />
-                          <span>{file.downloadCount} downloads</span>
-                        </div>
-                        <span>•</span>
-                        <span>Created {formatRelativeTime(file.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="ml-4">
-                    <Button
-                      onClick={() => handleDownload(file.id)}
-                      disabled={downloading}
-                      size="sm"
-                      className="flex items-center space-x-2"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>{downloading ? 'Downloading...' : 'Download'}</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+  {publicFiles.map((file) => (
+    <div
+      key={file.id}
+      className="p-4 sm:p-6 hover:bg-gray-50 transition-colors"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Left section */}
+        <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1">
+          <div className="text-2xl sm:text-3xl">
+            {getFileIcon(file.filetype)}
           </div>
+
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900 mb-1 break-words">
+              {file.filename}
+            </h3>
+
+            {/* File info */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
+              <span>{formatFileSize(file.filesize)}</span>
+              <span className="hidden sm:inline">•</span>
+              <div className="flex items-center space-x-1">
+                <User className="w-3 h-3" />
+                <span>by {file.owner.username}</span>
+              </div>
+              <span className="hidden sm:inline">•</span>
+              <div className="flex items-center space-x-1">
+                <Calendar className="w-3 h-3" />
+                <span>{formatRelativeTime(file.publicSharedAt)}</span>
+              </div>
+            </div>
+
+            {/* Downloads + Created time */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 mt-1">
+              <div className="flex items-center space-x-1">
+                <Eye className="w-3 h-3" />
+                <span>{file.downloadCount} downloads</span>
+              </div>
+              <span className="hidden sm:inline">•</span>
+              <span>Created {formatRelativeTime(file.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right section (button) */}
+        <div className="sm:ml-4">
+          <Button
+            onClick={() => handleDownload(file.id)}
+            disabled={downloading}
+            size="sm"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>{downloading ? "Downloading..." : "Download"}</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
         )}
       </div>
 

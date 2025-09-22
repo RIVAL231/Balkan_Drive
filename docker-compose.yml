@@ -17,7 +17,7 @@ services:
       - balkan-drive-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d graphqlmvp"]
-      interval: 30s
+      interval: 5s
       timeout: 10s
       retries: 3
 
@@ -61,10 +61,10 @@ services:
       - balkan-drive-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
+      interval: 5s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 15s
 
   # Frontend Web Application
   frontend:
@@ -82,9 +82,10 @@ services:
       - balkan-drive-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80", "||", "exit", "1"]
-      interval: 30s
+      interval: 5s
       timeout: 10s
       retries: 3
+      start_period: 15s
 
 networks:
   balkan-drive-network:

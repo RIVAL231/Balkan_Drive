@@ -20,7 +20,6 @@ The CI pipeline automatically tests the entire application stack whenever code i
 3. **Frontend** - React app loading, HTTP responses
 4. **End-to-End Flow** - User registration, JWT authentication, file operations
 5. **Security Features** - Rate limiting, input validation
-6. **Performance** - Service startup times, resource usage
 
 ### 🏥 Health Check Scripts
 
@@ -211,25 +210,6 @@ netstat -tulpn | grep :5432  # PostgreSQL
 1. Add test functions to health check scripts
 2. Update CI workflow if needed
 3. Document new test coverage
-
-### Custom Checks
-```bash
-# Add custom health checks to scripts
-test_custom_feature() {
-    log_info "Testing custom feature..."
-    # Your test logic here
-    return 0
-}
-```
-
-### Integration with Deployment
-```yaml
-# Add deployment step to CI workflow
-- name: Deploy to staging
-  if: github.ref == 'refs/heads/main'
-  run: |
-    # Deployment commands
-```
 
 ## Monitoring
 
