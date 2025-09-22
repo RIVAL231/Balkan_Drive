@@ -127,6 +127,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
         onToggleVisibility?.(file.id, !file.isPublicShared)
         break
       case "move-to-folder":
+        console.log("Move to folder action triggered for file:", file.id);
         onMoveToFolder?.(file.id)
         break
       case "show-stats":
@@ -170,7 +171,6 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
     {
       id: "toggle-visibility",
       label: file.isPublicShared ? "Make private" : "Make public",
-      icon: file.isPublicShared ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />,
       onClick: () => handleMenuAction("toggle-visibility"),
     },
     ...(file.isPublicShared ? [{
@@ -286,7 +286,7 @@ function FileCard({ file, onShare, onDelete, onToggleVisibility, onDownload, onM
               </button>
 
               <button
-                onClick={() => handleMenuAction("move")}
+                onClick={() => handleMenuAction("move-to-folder")}
                 className="w-full px-3 py-2.5 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 min-h-[44px] sm:min-h-auto"
               >
                 <Move className="w-4 h-4" />

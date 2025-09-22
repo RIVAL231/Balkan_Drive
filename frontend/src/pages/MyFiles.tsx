@@ -343,6 +343,7 @@ export default function MyFiles() {
   }
 
   const handleShowMoveModal = (fileId: string) => {
+    console.log("Opening MoveToFolderModal for file:", fileId);
     setFileToMove(fileId)
     setShowMoveModal(true)
   }
