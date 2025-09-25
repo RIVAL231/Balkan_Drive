@@ -271,7 +271,7 @@ export default function AdminPanel() {
             key={file.id}
             className="border rounded-lg p-3 bg-white shadow-sm"
           >
-            <p className="font-medium text-gray-900 break-words mb-1">{file.filename}</p>
+            <p className="font-medium text-gray-900 break-all mb-1">{file.filename}</p>
             {file.folder && (
               <p className="text-xs text-gray-500 mb-2 break-words">in {file.folder.name}</p>
             )}
