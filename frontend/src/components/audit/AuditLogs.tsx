@@ -176,7 +176,7 @@ export default function AuditLogs({ isAdmin = false, userId }: AuditLogsProps) {
                 </div>
 
                 {log.resourceName && (
-                  <div className="text-sm text-gray-700 font-medium break-words">
+                  <div className="text-sm text-gray-700  font-medium break-all">
                     {log.resourceName}
                   </div>
                 )}
