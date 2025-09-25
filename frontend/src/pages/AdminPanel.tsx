@@ -345,7 +345,7 @@ export default function AdminPanel() {
   )}
 
   {/* Audit Logs */}
-  <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
+  <div className="bg-white rounded-lg border max-w-3xl mx-auto px-3 border-gray-200 p-4 sm:p-6 mb-6 sm:mb-8">
     <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent System Activity</h3>
     <AuditLogs isAdmin={true} />
   </div>
